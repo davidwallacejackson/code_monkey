@@ -21,8 +21,8 @@ def get_modules(fs_path):
             modules.append((filename, True))
         elif filename.endswith('.py'):
 
-            #NOTE: not sure if this is robust enough. better way?
-            module_name = filename.strip(".py")
+            #strip the extension
+            module_name = os.path.splitext(filename)[0]
 
             #files ending in .py are assumed to be Python modules
             modules.append((module_name, False))
@@ -34,9 +34,12 @@ class Node(object):
 
     def __init__(self):
         self.parent = None
-        self.children = None
         self.rope_scope = None
         self.path = None
+
+    @property
+    def children(self):
+        return []
 
     @property
     def name(self):
@@ -69,6 +72,8 @@ class Node(object):
 class ProjectNode(Node):
 
     def __init__(self, project_path):
+        super(ProjectNode, self).__init__()
+
         self.rope_project = rope.base.project.Project(project_path)
         self.parent = None
         self.scope = None
@@ -113,6 +118,8 @@ class ProjectNode(Node):
 class PackageNode(Node):
     
     def __init__(self, parent, path):
+        super(PackageNode, self).__init__()
+
         self.parent = parent
         self.path = path
         self.rope_object = self.root.rope_project.get_pycore().get_module(path)
@@ -141,6 +148,8 @@ class PackageNode(Node):
 class ModuleNode(Node):
 
     def __init__(self, parent, path):
+        super(ModuleNode, self).__init__()
+
         self.parent = parent
         self.path = path
         self.rope_object = self.root.rope_project.get_pycore().get_module(path)
@@ -189,6 +198,8 @@ class ModuleNode(Node):
  
 class ClassNode(Node):
     def __init__(self, parent, path):
+        super(ClassNode, self).__init__()
+
         self.parent = parent
         self.path = path
 
@@ -199,6 +210,8 @@ class ClassNode(Node):
 
 class VariableNode(Node):
     def __init__(self, parent, path):
+        super(VariableNode, self).__init__()
+
         self.parent = parent
         self.path = path
 
@@ -208,10 +221,11 @@ class VariableNode(Node):
 
 class FunctionNode(Node):
     def __init__(self, parent, path):
+        super(FunctionNode, self).__init__()
+
         self.parent = parent
         self.path = path
 
         self.rope_object = self.parent.rope_scope.get_name(
             self.name).get_object()
         self.rope_scope = self.rope_object.get_scope()
-
