@@ -35,6 +35,7 @@ class Node(object):
     def __init__(self):
         self.parent = None
         self.rope_scope = None
+        self.rope_object = None
         self.path = None
 
     @property
@@ -53,6 +54,7 @@ class Node(object):
 
     @property
     def root(self):
+        '''return the root Node in the tree (should be a ProjectNode)'''
         if self.parent:
             return self.parent.root
 
@@ -68,6 +70,43 @@ class Node(object):
 
     def __repr__(self):
         return self.__unicode__()
+
+    @property
+    def source_file(self):
+        '''return a reference to the file in which this Node was defined. only
+        meaningful at or below the module level -- higher than that, source_file
+        is None.'''
+
+        if self.rope_object:
+            if hasattr(self.rope_object, 'get_resource'):
+                return self.rope_object.get_resource()
+
+            #if we have an object, but it doesn't have a source file, try our
+            #parent
+            return self.parent.source_file
+
+        #if we don't have a pyobject, we're too high up to have a source file
+        return None
+
+
+    def get_source_code(self):
+        '''return a string of the source code the Node represents'''
+
+        if not self.source_file:
+            return None
+
+        #TODO: rope's File class doesn't do readlines, so we open a real file
+        #here. Seems hacky. Maybe there's a better way?
+        with open(self.source_file.real_path) as pure_py_source_file:
+            source_lines = pure_py_source_file.readlines()
+
+            starts_at = self.rope_scope.get_start()
+            ends_at = self.rope_scope.get_end()
+
+            #take the lines that make up the source code and join them into one
+            #string
+            return "".join(source_lines[starts_at:ends_at])
+
 
 class ProjectNode(Node):
 
