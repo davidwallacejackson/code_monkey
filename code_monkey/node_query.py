@@ -1,3 +1,5 @@
+from code_monkey.node import ProjectNode
+
 class NodeQuery(object):
 
     def __init__(self, matches=[]):
@@ -18,7 +20,7 @@ class NodeQuery(object):
         '''Return a new Query encompassing all immediate children of matches'''
         children = []
 
-        for match in matches:
+        for match in self.matches:
             children.extend(match.children)
 
         return NodeQuery(children)
@@ -28,7 +30,7 @@ class NodeQuery(object):
 
         descendents = self.children()
 
-        for child in children.matches:
+        for child in descendents.matches:
             child_descendents = NodeQuery([child]).descendents()
 
             descendents = descendents.join(child_descendents)
@@ -39,4 +41,3 @@ class NodeQuery(object):
         '''Return a flat query of matches and all their descendents'''
 
         return self.join(self.descendents())
-
