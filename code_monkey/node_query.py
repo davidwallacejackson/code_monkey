@@ -99,3 +99,15 @@ class NodeQuery(object):
                 filter_matches.append(match)
 
         return NodeQuery(filter_matches)
+
+    def has_name(self, find_me):
+        '''Matches on nodes whose scope contains a name find_me.'''
+
+        filter_matches = []
+
+        for match in self:
+            if match.rope_scope and \
+                    find_me in match.rope_scope.get_names().keys:
+                filter_matches.append(match)
+
+        return NodeQuery(filter_matches)
