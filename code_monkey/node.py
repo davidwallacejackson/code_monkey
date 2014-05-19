@@ -5,6 +5,7 @@ import rope.base.project
 from rope.base.pynames import DefinedName
 from rope.base.pyobjectsdef import PyClass, PyFunction
 
+from code_monkey.utils import string_to_lines
 
 def get_modules(fs_path):
     '''Find all Python modules in fs_path. Returns a list of tuples of the form:
@@ -105,7 +106,28 @@ class Node(object):
 
             #take the lines that make up the source code and join them into one
             #string
-            return "".join(source_lines[starts_at:ends_at])
+            return ''.join(source_lines[starts_at:ends_at])
+
+    def generate_change(self, new_source):
+        '''return a change (for use with ChangeSet) that overwrites the contents
+        of this Node and replaces them with new_source. Only valid on Nodes with
+        a source_file.
+
+        A change is a tuple of the form (starting_line, ending_line, new_lines),
+        where starting_line and ending_line are line indices and new_lines is a
+        list of line strings.'''
+
+        #TODO: rope's File class doesn't do readlines, so we open a real file
+        #here. Seems hacky. Maybe there's a better way?
+        with open(self.source_file.real_path) as pure_py_source_file:
+            source_lines = pure_py_source_file.readlines()
+
+            starts_at = self.rope_scope.get_start()
+            ends_at = self.rope_scope.get_end()
+
+            new_lines = string_to_lines(new_source)
+
+            return (starts_at, ends_at, new_lines)
 
 
 class ProjectNode(Node):

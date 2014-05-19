@@ -107,7 +107,7 @@ class NodeQuery(object):
 
         for match in self:
             if match.rope_scope and \
-                    find_me in match.rope_scope.get_names().keys:
+                    find_me in match.rope_scope.get_names().keys():
                 filter_matches.append(match)
 
         return NodeQuery(filter_matches)
