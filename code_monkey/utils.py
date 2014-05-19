@@ -39,3 +39,16 @@ def string_to_lines(input_string):
         output_lines.append(line + '\n')
 
     return output_lines
+
+
+def get_changed_copy(old_lines, change):
+    '''Return a copy of old_lines (a list of line strings) with change
+    applied.'''
+
+    starting_line, ending_line, new_lines = change
+
+    transformed_lines = old_lines[:starting_line]
+    transformed_lines.extend(new_lines)
+    transformed_lines.extend(old_lines[(ending_line + 1):])
+
+    return transformed_lines

@@ -1,5 +1,9 @@
 '''Tools for editing source files.'''
-from code_monkey.utils import OverlapEditException
+from operator import itemgetter
+
+from code_monkey.utils import (
+    get_changed_copy,
+    OverlapEditException)
 
 
 def ranges_overlap(first_range, second_range):
@@ -98,3 +102,44 @@ class ChangeSet(object):
                 preview += change_as_string(path, change)
 
         return preview
+
+    def commit(self):
+        '''Write these changes to the filesystem.'''
+
+        for path, file_changes in self.changes.items():
+
+            #gets the changes for this file as a list sorted by the
+            #starting_line of each change
+            sorted_changes = sorted(file_changes, key=itemgetter(0))
+
+            #offset is the number of lines to ADD to the location of the next
+            #change. It can be negative, if previous changes were smaller than
+            #the source they replaced
+            offset = 0
+
+            #lines changes with every run of the loop to reflect each separate
+            #change
+            with open(path) as read_file:
+                lines = read_file.readlines()
+
+            for change in sorted_changes:
+                #adjust the line numbers to account for the offset
+                starting_line, ending_line, new_lines = change
+                starting_line += offset
+                ending_line += offset
+
+                #apply the change to lines
+                lines = get_changed_copy(
+                    lines,
+                    (starting_line, ending_line, new_lines))
+
+                #adjust offset based on the length of the change
+                old_length = (ending_line - starting_line) + 1
+                new_length = len(new_lines)
+                offset += new_length - old_length
+
+            #lines now incorporates all changes, and is ready to be written out
+            #to the file
+            with open(path, 'w') as write_file:
+                write_file.writelines(lines)
+
