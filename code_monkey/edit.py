@@ -2,6 +2,7 @@
 from operator import itemgetter
 
 from code_monkey.utils import (
+    change_as_string,
     get_changed_copy,
     OverlapEditException)
 
@@ -27,29 +28,6 @@ def ranges_overlap(first_range, second_range):
         return True
 
     return False
-
-
-def change_as_string(path, change):
-    '''Return a string showing the lines affected by change in path, before and
-    after the change is processed.
-
-    change is a tuple of the format (starting_line, ending_line, new_lines)'''
-
-    starting_line, ending_line, new_lines = change
-
-    with open(path) as source_file:
-        source_lines = source_file.readlines()
-        output = 'In file: {}:\n'.format(path)
-
-        output += 'Before:\n'
-        output += ''.join(source_lines[starting_line:(ending_line+1)]) + '\n'
-
-        output += 'After:\n'
-        output += ''.join(new_lines) + '\n'
-
-        return output
-
-
 
 
 class ChangeSet(object):

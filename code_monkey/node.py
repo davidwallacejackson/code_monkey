@@ -2,7 +2,7 @@ import os
 import pkgutil
 
 import rope.base.project
-from rope.base.pynames import DefinedName
+from rope.base.pynames import AssignedName, DefinedName
 from rope.base.pyobjectsdef import PyClass, PyFunction
 
 from code_monkey.utils import string_to_lines
@@ -61,17 +61,6 @@ class Node(object):
 
         return self
 
-    def __unicode__(self):
-        return '{}: {}'.format(
-            str(self.__class__.__name__),
-            self.path)
-
-    def __str__(self):
-        return self.__unicode__()
-
-    def __repr__(self):
-        return self.__unicode__()
-
     @property
     def source_file(self):
         '''return a reference to the file in which this Node was defined. only
@@ -89,6 +78,15 @@ class Node(object):
         #if we don't have a pyobject, we're too high up to have a source file
         return None
 
+    @property
+    def start_line(self):
+        #rope gives line numbers starting with 1
+        return self.rope_scope.get_start() - 1
+
+    @property
+    def end_line(self):
+        #rope gives line numbers starting with 1
+        return self.rope_scope.get_end() - 1
 
     def get_source_code(self):
         '''return a string of the source code the Node represents'''
@@ -101,12 +99,12 @@ class Node(object):
         with open(self.source_file.real_path) as pure_py_source_file:
             source_lines = pure_py_source_file.readlines()
 
-            starts_at = self.rope_scope.get_start()
-            ends_at = self.rope_scope.get_end()
+            starts_at = self.start_line
+            ends_at = self.end_line
 
             #take the lines that make up the source code and join them into one
             #string
-            return ''.join(source_lines[starts_at:ends_at])
+            return ''.join(source_lines[starts_at:(ends_at+1)])
 
     def generate_change(self, new_source):
         '''return a change (for use with ChangeSet) that overwrites the contents
@@ -122,12 +120,24 @@ class Node(object):
         with open(self.source_file.real_path) as pure_py_source_file:
             source_lines = pure_py_source_file.readlines()
 
-            starts_at = self.rope_scope.get_start()
-            ends_at = self.rope_scope.get_end()
+            starts_at = self.start_line
+            ends_at = self.end_line
 
             new_lines = string_to_lines(new_source)
 
             return (starts_at, ends_at, new_lines)
+
+    def __unicode__(self):
+        return '{}: {}'.format(
+            str(self.__class__.__name__),
+            self.path)
+
+    def __str__(self):
+        return self.__unicode__()
+
+    def __repr__(self):
+        return self.__unicode__()
+
 
 
 class ProjectNode(Node):
@@ -227,7 +237,7 @@ class ModuleNode(Node):
             #representing it
 
             #we only want names defined in this module -- rope calls these
-            #DefinedNames
+            #DefinedNames or AssignedNames
             if isinstance(pyname, DefinedName):
                 pyobject = pyname.get_object()
 
@@ -246,13 +256,13 @@ class ModuleNode(Node):
                         parent=self,
                         path=self.path + '.' + str_name))
 
-                else:
-                    #if it's not a class or a function, we'll assume it's a
-                    #variable
+            elif isinstance(pyname, AssignedName):
+                #if it's not a class or a function, we'll assume it's a
+                #variable
 
-                    children.append(VariableNode(
-                        parent=self,
-                        path=self.path + '.' + str_name))
+                children.append(VariableNode(
+                    parent=self,
+                    path=self.path + '.' + str_name))
 
         return children
 
@@ -278,6 +288,20 @@ class VariableNode(Node):
 
         self.rope_object = self.parent.rope_scope.get_name(
             self.name).get_object()
+
+    @property
+    def start_line(self):
+        #rope gives line numbers starting at 1
+        return self.parent.rope_scope.get_name(
+            self.name).get_definition_location()[1] - 1
+
+    @property
+    def end_line(self):
+        #TODO: fix to account for multi-line variable definitions
+        #rope gives line numbers starting at 1
+        return self.parent.rope_scope.get_name(
+            self.name).get_definition_location()[1] - 1
+
 
 
 class FunctionNode(Node):

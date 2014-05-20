@@ -6,7 +6,7 @@ class InvalidEditException(Exception):
 
 
 class OverlapEditException(InvalidEditException):
-    def __init__(path, conflicting_changes):
+    def __init__(self, path, conflicting_changes):
         error_message = "Changes overlap: \n"
         error_message += change_as_string(path, conflicting_changes[0])
         error_message += 'vs:\n'
@@ -52,3 +52,24 @@ def get_changed_copy(old_lines, change):
     transformed_lines.extend(old_lines[(ending_line + 1):])
 
     return transformed_lines
+
+
+def change_as_string(path, change):
+    '''Return a string showing the lines affected by change in path, before and
+    after the change is processed.
+
+    change is a tuple of the format (starting_line, ending_line, new_lines)'''
+
+    starting_line, ending_line, new_lines = change
+
+    with open(path) as source_file:
+        source_lines = source_file.readlines()
+        output = 'In file: {}:\n'.format(path)
+
+        output += 'Before:\n'
+        output += ''.join(source_lines[starting_line:(ending_line+1)]) + '\n'
+
+        output += 'After:\n'
+        output += ''.join(new_lines) + '\n'
+
+        return output
