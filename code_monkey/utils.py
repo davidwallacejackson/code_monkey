@@ -42,6 +42,24 @@ def string_to_lines(input_string):
     return output_lines
 
 
+def lines_to_string(input_lines):
+    '''return lines of source code as a single string'''
+
+    return ''.join(input_lines)
+
+
+def inject_at_line(source_lines, lines_to_inject, start_at):
+    '''Return a copy of source_lines with lines_to_inject added in at index
+    start_at. Lines in source_lines are not overwritten, but moved to accomodate
+    the new content.'''
+
+    output = source_lines[:start_at]
+    output.extend(lines_to_inject)
+    output.extend(source_lines[start_at:])
+
+    return output
+
+
 def get_changed_copy(old_lines, change):
     '''Return a copy of old_lines (a list of line strings) with change
     applied.'''
