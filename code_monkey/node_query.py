@@ -91,7 +91,7 @@ class NodeQuery(object):
         return self.filter_type(VariableNode)
 
     def path_contains(self, find_me):
-
+        '''Match nodes whose path contains the string find_me'''
         filter_matches = []
 
         for match in self:
@@ -100,8 +100,20 @@ class NodeQuery(object):
 
         return NodeQuery(filter_matches)
 
+    def source_contains(self, find_me):
+        '''Match nodes whose source contains the string find_me.'''
+
+        filter_matches = []
+
+        for match in self:
+            if match.source_file and find_me in match.get_source_code():
+                filter_matches.append(match)
+
+        return NodeQuery(filter_matches)
+
+
     def has_name(self, find_me):
-        '''Matches on nodes whose scope contains a name find_me.'''
+        '''Match nodes whose scope contains a name find_me.'''
 
         filter_matches = []
 
