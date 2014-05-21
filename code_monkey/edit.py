@@ -69,9 +69,7 @@ class ChangeSet(object):
 
     def preview(self):
         '''Get a human-readable preview of all the changes to the source
-        encompassed by this ChangeSet.
-
-        TODO: make the change descriptions smaller, probably using difflib.'''
+        encompassed by this ChangeSet.'''
 
         preview = 'Changes:\n\n'
 

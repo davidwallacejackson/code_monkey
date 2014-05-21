@@ -1,4 +1,5 @@
 '''Utility functions used by other modules.'''
+import difflib
 
 
 class InvalidEditException(Exception):
@@ -60,16 +61,19 @@ def change_as_string(path, change):
 
     change is a tuple of the format (starting_line, ending_line, new_lines)'''
 
-    starting_line, ending_line, new_lines = change
-
     with open(path) as source_file:
         source_lines = source_file.readlines()
-        output = 'In file: {}:\n'.format(path)
+        transformed_lines = get_changed_copy(source_lines, change)
 
-        output += 'Before:\n'
-        output += ''.join(source_lines[starting_line:(ending_line+1)]) + '\n'
+        diff = difflib.unified_diff(
+            source_lines,
+            transformed_lines,
+            fromfile=path,
+            tofile=path)
 
-        output += 'After:\n'
-        output += ''.join(new_lines) + '\n'
+        output = ''
+
+        for line in diff:
+            output += line
 
         return output
