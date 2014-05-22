@@ -4,6 +4,7 @@ import pkgutil
 import rope.base.project
 from rope.base.pynames import AssignedName, DefinedName
 from rope.base.pyobjectsdef import PyClass, PyFunction
+from rope.base.resources import File
 
 from code_monkey.utils import string_to_lines
 
@@ -69,8 +70,13 @@ class Node(object):
 
         if self.rope_object:
             if hasattr(self.rope_object, 'get_resource'):
-                return self.rope_object.get_resource()
+                resource = self.rope_object.get_resource()
+                if not resource.is_folder():
+                    return self.rope_object.get_resource()
 
+                #if our resource is a Folder, we're too high up to have a source
+                #file
+                return None
             #if we have an object, but it doesn't have a source file, try our
             #parent
             return self.parent.source_file
