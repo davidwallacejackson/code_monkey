@@ -1,4 +1,7 @@
+from os import path
+
 from code_monkey.node import (
+    ProjectNode
     ClassNode,
     FunctionNode,
     ModuleNode,
@@ -6,9 +9,24 @@ from code_monkey.node import (
     ProjectNode,
     VariableNode)
 
+def project_query(project_path):
+    '''Return a NodeQuery containing a ProjectNode representing the Python
+    project at project_path.'''
+
+    return NodeQuery(
+        ProjectNode(project_path))
+
 class NodeQuery(object):
+    '''A set of nodes, which can be filtered down to select nodes that match
+    certain criteria.'''
 
     def __init__(self, matches=[]):
+
+        #for convenience, NodeQueries called with a single argument will
+        #automatically coerce it to a single-item list
+        if not isinstance(matches, list):
+            matches = [matches]
+
         self.matches = matches
 
     def __getitem__(self, index):
