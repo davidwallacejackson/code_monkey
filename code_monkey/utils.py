@@ -24,10 +24,6 @@ def string_to_lines(input_string):
     exception if input_string doesn't end in a newline.'''
     split_lines = input_string.split('\n')
 
-    if not split_lines[-1] == '':
-        raise InvalidEditException(
-            'input_string must end in a newline character')
-
     #strip the last element from split_lines, which should be an empty string
     split_lines = split_lines[:-1]
 
@@ -95,3 +91,47 @@ def change_as_string(path, change):
             output += line
 
         return output
+
+
+def count_unterminated_in_source(text, start_char, term_char):
+    '''Given a string text and substrings start_char and term_char, return the
+    number of start_char without a matching term_char. Use, for instance, to
+    find the number of unmatched parentheses in a source string.
+
+    The current implementation has known issues: it can be fooled by end chars
+    preceding start chars, and/or chars appearing inside string literals. TODO:
+    Fix with a proper parsing solution. Better yet, look into the astroid bug
+    that makes this necessary (see VariableNode.body_end_line)'''
+    return text.count(start_char) - text.count(term_char)
+
+
+def find_termination(lines, start_at, terminating_chars):
+    '''Given a list of strings lines, an int starting_at, and a dict
+    terminating_chars mapping strings to ints, return the line number by which
+    we have seen each substring the number of times mapped to it in
+    terminating_chars, starting at lines[start_at].
+
+    Argh, that's a mouthful. In other words:
+
+    find_termination(lines, 20, {')', 3}) starts at line 20, and looks for 3
+    terminating parentheses, then gives you the line it's on when it find the
+    last one.
+
+    This has the same problems that count_unterminated_in_source mentions above.
+    Also, it won't detect NEW start_chars in the lines and adjust
+    terminating_chars accordingly. TODO: fix this whole system.'''
+
+    remaining_count = reduce(lambda x, y: x+y, terminating_chars.values())
+    if remaining_count <= 0:
+        return None
+
+    for index, line in enumerate(lines[start_at:]):
+        for char in line:
+            if char in terminating_chars.keys():
+                terminating_chars[char] -= 1
+                remaining_count = reduce(
+                    lambda x, y: x+y, terminating_chars.values())
+                if remaining_count <= 0:
+                    return index + start_at
+
+    return None

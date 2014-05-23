@@ -1,3 +1,4 @@
+from ast import literal_eval
 import os
 import pkgutil
 
@@ -5,7 +6,10 @@ from astroid.manager import AstroidManager
 from astroid.node_classes import Assign, AssName
 from astroid.scoped_nodes import Class, Function
 
-from code_monkey.utils import string_to_lines
+from code_monkey.utils import (
+    count_unterminated_in_source,
+    find_termination,
+    string_to_lines)
 
 def get_modules(fs_path):
     '''Find all Python modules in fs_path. Returns a list of tuples of the form:
@@ -109,8 +113,9 @@ class Node(object):
     def start_column(self):
         return self._astroid_object.col_offset
 
-    def get_source_code(self):
-        '''return a string of the source code the Node represents'''
+    def _get_source_region(self, start_line, start_column, end_line):
+        '''return a string of the source code from start_line, start_column
+        through end_line.'''
 
         with open(self.fs_path, 'r') as source_file:
 
@@ -119,14 +124,32 @@ class Node(object):
 
             source_lines = source_file.readlines()
 
-            starts_at = self.start_line
-            ends_at = self.end_line
+            starts_at = start_line
+            ends_at = end_line
 
             #take the lines that make up the source code and join them into one
             #string
             source = ''.join(source_lines[starts_at:(ends_at+1)])
-            source = source[self.start_column:]
+            source = source[start_column:]
             return source
+
+    def get_source_code(self):
+        '''return a string of the source code the Node represents'''
+
+        return self._get_source_region(
+            self.start_line,
+            self.start_column,
+            self.end_line)
+
+    def get_body_source_code(self):
+        '''return a string of only the body of the node -- i.e., excluding the
+        declaration. For a Class or Function, that means the class or function
+        body. For a Variable, that's the right hand of the assignment. For a
+        Module, it's the same as get_source_code().'''
+        return self._get_source_region(
+            self.body_start_line,
+            self.body_start_column,
+            self.body_end_line)
 
     def generate_change(self, new_source):
         '''return a change (for use with ChangeSet) that overwrites the contents
@@ -137,15 +160,12 @@ class Node(object):
         where starting_line and ending_line are line indices and new_lines is a
         list of line strings.'''
 
-        with self.get_source_file() as source_file:
-            source_lines = source_file.readlines()
+        starts_at = self.start_line
+        ends_at = self.end_line
 
-            starts_at = self.start_line
-            ends_at = self.end_line
+        new_lines = string_to_lines(new_source)
 
-            new_lines = string_to_lines(new_source)
-
-            return (starts_at, ends_at, new_lines)
+        return (starts_at, ends_at, new_lines)
 
     def __unicode__(self):
         return '{}: {}'.format(
@@ -310,6 +330,18 @@ class ModuleNode(Node):
         #subtract 1
         return self._astroid_object.fromlineno
 
+    @property
+    def body_start_line(self):
+        return self.start_line
+
+    @property
+    def body_start_column(self):
+        return self.start_column
+
+    @property
+    def body_end_line(self):
+        return self.end_line
+
  
 class ClassNode(Node):
     def __init__(self, parent, path, astroid_object):
@@ -322,6 +354,20 @@ class ClassNode(Node):
     @property
     def fs_path(self):
         return self.parent.fs_path
+
+    @property
+    def body_start_line(self):
+        #TODO: account for multi-line class signatures
+        return self.start_line + 1
+
+    @property
+    def body_start_column(self):
+        return self.start_column
+
+    @property
+    def body_end_line(self):
+        return self.end_line
+
 
 class VariableNode(Node):
     def __init__(self, parent, astroid_object):
@@ -342,7 +388,88 @@ class VariableNode(Node):
 
     @property
     def fs_path(self):
-        return self.parent.fs_path 
+        return self.parent.fs_path
+
+    #the 'whole source' of a VariableNode includes the name and the value
+    @property
+    def start_line(self):
+        return self._astroid_name.fromlineno - 1
+
+    @property
+    def start_column(self):
+        return self._astroid_name.col_offset
+
+    @property
+    def end_line(self):
+        return self.body_end_line
+
+    #in a VariableNode, the _astroid_value represents the body
+    @property
+    def body_start_line(self):
+        return self._astroid_value.fromlineno - 1
+
+    @property
+    def body_start_column(self):
+        return self._astroid_value.col_offset
+
+    @property
+    def body_end_line(self):
+        #there's a bug in astroid where it doesn't correctly detect the last
+        #line of multiline enclosed blocks (parens, brackets, etc.) -- it gives
+        #the last line with content, rather than the line containing the
+        #terminating character
+
+        #we have to work around this by scanning through the source ourselves to
+        #find the terminating point -- see utils.find_termination
+
+        #should probably submit a bug report for astroid, too
+
+        astroid_end_line = self._astroid_value.tolineno - 1
+        source_via_astroid = self._get_source_region(
+            self.body_start_line,
+            self.body_start_column,
+            astroid_end_line)
+
+        unclosed_dict = {}
+
+        parens_count = count_unterminated_in_source(
+            source_via_astroid, '(', ')')
+        if parens_count > 0:
+            unclosed_dict[')'] = parens_count 
+
+        square_count = count_unterminated_in_source(
+            source_via_astroid, '[', ']')
+        if square_count > 0:
+            unclosed_dict[']'] = square_count
+
+        curly_count = count_unterminated_in_source(
+            source_via_astroid, '{', '}')
+        if curly_count > 0:
+            unclosed_dict['}'] = curly_count
+
+        if len(unclosed_dict.items()) > 0:
+            unclosed_count = reduce(lambda x, y: x+y, unclosed_dict.values())
+        else:
+            unclosed_count = 0
+
+        if unclosed_count == 0:
+            #if there are no unclosed blocks, then astroid found the right end
+            #line, and we can just return it
+            return astroid_end_line
+
+        #otherwise, we have to dig through the source looking for the end
+        #ourselves
+        with open(self.fs_path, 'r') as source_file:
+            full_source = source_file.read()
+
+            source_lines = string_to_lines(full_source)
+
+        end_line = find_termination(
+            source_lines,
+            astroid_end_line,
+            unclosed_dict)
+
+        return end_line
 
 
 class FunctionNode(Node):
@@ -356,3 +483,16 @@ class FunctionNode(Node):
     @property
     def fs_path(self):
         return self.parent.fs_path
+
+    @property
+    def body_start_line(self):
+        #TODO: account for multi-line function signatures
+        return self.start_line + 1
+
+    @property
+    def body_start_column(self):
+        return self.start_column
+
+    @property
+    def body_end_line(self):
+        return self.end_line
