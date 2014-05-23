@@ -106,7 +106,7 @@ class NodeQuery(object):
         filter_matches = []
 
         for match in self:
-            if match.source_file and find_me in match.get_source_code():
+            if match.get_source_file() and find_me in match.get_source_code():
                 filter_matches.append(match)
 
         return NodeQuery(filter_matches)

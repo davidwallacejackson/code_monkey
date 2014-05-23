@@ -1,10 +1,9 @@
 import os
 import pkgutil
 
-import rope.base.project
-from rope.base.pynames import AssignedName, DefinedName
-from rope.base.pyobjectsdef import PyClass, PyFunction
-from rope.base.resources import File
+from astroid.manager import AstroidManager
+from astroid.node_classes import Assign, AssName
+from astroid.scoped_nodes import Class, Function
 
 from code_monkey.utils import string_to_lines
 
@@ -21,7 +20,9 @@ def get_modules(fs_path):
         if os.path.isdir(full_path) and '__init__.py' in os.listdir(full_path):
             #directories with an __init__.py file are Python packages
             modules.append((filename, True))
-        elif filename.endswith('.py'):
+        elif filename.endswith('.py') and not filename == '__init__.py':
+            #TODO: figure out how to handle source in init files, since astroid
+            #doesn't acknowledge them
 
             #strip the extension
             module_name = os.path.splitext(filename)[0]
@@ -32,12 +33,27 @@ def get_modules(fs_path):
     return modules
 
 
+def make_astroid_project(project_path):
+    project_files = []
+
+    for dirpath, dirname, filenames in os.walk(project_path):
+        #get all python files and add them to a list we can use with astroid's
+        #project builder
+        for filename in filenames:
+            if filename.endswith(".py"):
+                project_files.append(os.path.join(dirpath, filename))
+
+                if filename == '__init__.py':
+                    #this is a package, so we should add the whole folder
+                    project_files.append(dirpath) 
+
+    return AstroidManager().project_from_files(project_files)
+
+
 class Node(object):
 
     def __init__(self):
         self.parent = None
-        self.rope_scope = None
-        self.rope_object = None
         self.path = None
 
     @property
@@ -63,54 +79,54 @@ class Node(object):
         return self
 
     @property
-    def source_file(self):
-        '''return a reference to the file in which this Node was defined. only
-        meaningful at or below the module level -- higher than that, source_file
-        is None.'''
+    def fs_path(self):
+        #some nodes will recurse upward to find their fs_path, which is why we
+        #hide it behind a property method
+        return self._fs_path
 
-        if self.rope_object:
-            if hasattr(self.rope_object, 'get_resource'):
-                resource = self.rope_object.get_resource()
-                if not resource.is_folder():
-                    return self.rope_object.get_resource()
+    def get_source_file(self):
+        '''return a read-only file object for the file in which this Node was
+        defined. only meaningful at or below the module level -- higher than
+        that, source_file is None.'''
 
-                #if our resource is a Folder, we're too high up to have a source
-                #file
-                return None
-            #if we have an object, but it doesn't have a source file, try our
-            #parent
-            return self.parent.source_file
-
-        #if we don't have a pyobject, we're too high up to have a source file
-        return None
+        try:
+            return open(self.fs_path, 'r')
+        except IOError:
+            #if the path is to a directory, we'll get an IOError
+            return None
 
     @property
     def start_line(self):
-        #rope gives line numbers starting with 1
-        return self.rope_scope.get_start() - 1
+        #astroid gives line numbers starting with 1
+        return self._astroid_object.fromlineno - 1
 
     @property
     def end_line(self):
-        #rope gives line numbers starting with 1
-        return self.rope_scope.get_end() - 1
+        #astroid gives line numbers starting with 1
+        return self._astroid_object.tolineno - 1
+
+    @property
+    def start_column(self):
+        return self._astroid_object.col_offset
 
     def get_source_code(self):
         '''return a string of the source code the Node represents'''
 
-        if not self.source_file:
-            return None
+        with open(self.fs_path, 'r') as source_file:
 
-        #TODO: rope's File class doesn't do readlines, so we open a real file
-        #here. Seems hacky. Maybe there's a better way?
-        with open(self.source_file.real_path) as pure_py_source_file:
-            source_lines = pure_py_source_file.readlines()
+            if not source_file:
+                return None
+
+            source_lines = source_file.readlines()
 
             starts_at = self.start_line
             ends_at = self.end_line
 
             #take the lines that make up the source code and join them into one
             #string
-            return ''.join(source_lines[starts_at:(ends_at+1)])
+            source = ''.join(source_lines[starts_at:(ends_at+1)])
+            source = source[self.start_column:]
+            return source
 
     def generate_change(self, new_source):
         '''return a change (for use with ChangeSet) that overwrites the contents
@@ -121,10 +137,8 @@ class Node(object):
         where starting_line and ending_line are line indices and new_lines is a
         list of line strings.'''
 
-        #TODO: rope's File class doesn't do readlines, so we open a real file
-        #here. Seems hacky. Maybe there's a better way?
-        with open(self.source_file.real_path) as pure_py_source_file:
-            source_lines = pure_py_source_file.readlines()
+        with self.get_source_file() as source_file:
+            source_lines = source_file.readlines()
 
             starts_at = self.start_line
             ends_at = self.end_line
@@ -151,18 +165,18 @@ class ProjectNode(Node):
     def __init__(self, project_path):
         super(ProjectNode, self).__init__()
 
-        self.rope_project = rope.base.project.Project(project_path)
+        self._astroid_project = make_astroid_project(project_path)
         self.parent = None
         self.scope = None
         self.path = ''
 
         #the file system (not python) path to the project
-        self.fs_path = project_path
+        self._fs_path = project_path
 
     @property
     def children(self):
-        '''rope doesn't expose the children of packages in a convenient way, so
-        we the filesystem to list them and build child nodes'''
+        '''astroid doesn't expose the children of packages in a convenient way,
+        so we the filesystem to list them and build child nodes'''
 
         #NOTE: pkgutil.iter_modules should do this, but for some reason it is
         #occasionally iterating down and grabbing modules that aren't on the
@@ -199,14 +213,17 @@ class PackageNode(Node):
 
         self.parent = parent
         self.path = path
-        self.rope_object = self.root.rope_project.get_pycore().get_module(path)
+
+        self._fs_path = os.path.join(
+            self.root.fs_path,
+            self.path.replace('.', '/'))
 
     @property
     def children(self):
-        '''rope doesn't expose the children of packages in a convenient way, so
-        we use pkgutil to access them and build child nodes'''
+        '''astroid doesn't expose the children of packages in a convenient way,
+        so we use pkgutil to access them and build child nodes'''
 
-        child_names = get_modules(self.rope_object.get_resource().real_path)
+        child_names = get_modules(self.fs_path)
         children = []
 
         for name, is_package in child_names:
@@ -229,94 +246,99 @@ class ModuleNode(Node):
 
         self.parent = parent
         self.path = path
-        self.rope_object = self.root.rope_project.get_pycore().get_module(path)
-        self.rope_scope = self.rope_object.get_scope()
+
+        #TODO: this is a hacky way of getting the name of the folder that the
+        #whole project is in (and it's broken under Windows). come up with
+        #something more robust!
+        root_package_name = self.root.fs_path.split('/')[-1]
+        self._astroid_object = self.root._astroid_project.get_module(
+            root_package_name + '.' + self.path)
+
+        self._fs_path = os.path.join(
+            self.root.fs_path,
+            self.path.replace('.', '/')) + '.py'
 
     @property
     def children(self):
-        #all of rope's PyNames found in scope in this module
-        names = self.rope_scope.get_names()
+        #all of the children found by astroid:
+
+        astroid_children = self._astroid_object.get_children()
         children = []
 
-        for str_name, pyname in names.items():
-            #str_name is the name as a string, pyname is the rope PyName object
-            #representing it
+        for child in astroid_children:
+            
+            if isinstance(child, Class):
 
-            #we only want names defined in this module -- rope calls these
-            #DefinedNames or AssignedNames
-            if isinstance(pyname, DefinedName):
-                pyobject = pyname.get_object()
+                children.append(ClassNode(
+                    parent=self,
+                    path=self.path + '.' + child.name,
+                    astroid_object=child))
 
-                #we can use the PyObject from rope to distinguish classes,
-                #functions, and variables
+            elif isinstance(child, Function):
 
-                if isinstance(pyobject, PyClass):
+                children.append(FunctionNode(
+                    parent=self,
+                    path=self.path + '.' + child.name,
+                    astroid_object=child))
 
-                    children.append(ClassNode(
-                        parent=self,
-                        path=self.path + '.' + str_name))
-
-                elif isinstance(pyobject, PyFunction):
-
-                    children.append(FunctionNode(
-                        parent=self,
-                        path=self.path + '.' + str_name))
-
-            elif isinstance(pyname, AssignedName):
-                #if it's not a class or a function, we'll assume it's a
-                #variable
+            elif isinstance(child, Assign):
+                #Assign is the class representing a variable assignment.
 
                 children.append(VariableNode(
                     parent=self,
-                    path=self.path + '.' + str_name))
+                    astroid_object=child))
 
         return children
 
+    @property
+    def start_line(self):
+        #for modules, astroid gives 0 as the start line -- so we don't want to
+        #subtract 1
+        return self._astroid_object.fromlineno
+
  
 class ClassNode(Node):
-    def __init__(self, parent, path):
+    def __init__(self, parent, path, astroid_object):
         super(ClassNode, self).__init__()
 
         self.parent = parent
         self.path = path
+        self._astroid_object = astroid_object
 
-        self.rope_object = self.parent.rope_scope.get_name(
-            self.name).get_object()
-        self.rope_scope = self.rope_object.get_scope()
-
+    @property
+    def fs_path(self):
+        return self.parent.fs_path
 
 class VariableNode(Node):
-    def __init__(self, parent, path):
+    def __init__(self, parent, astroid_object):
         super(VariableNode, self).__init__()
 
         self.parent = parent
-        self.path = path
 
-        self.rope_object = self.parent.rope_scope.get_name(
-            self.name).get_object()
+        #the _astroid_object (an Assign object) has TWO children that we need to
+        #consider: (the variable name) and another astroid node (the 'right
+        #hand' value)
+        self._astroid_object = astroid_object
+
+        #TODO: account for tuple assignment
+        self._astroid_name = self._astroid_object.targets[0]
+        self._astroid_value = self._astroid_object.value
+
+        self.path = self.parent.path + '.' + self._astroid_name.name
 
     @property
-    def start_line(self):
-        #rope gives line numbers starting at 1
-        return self.parent.rope_scope.get_name(
-            self.name).get_definition_location()[1] - 1
-
-    @property
-    def end_line(self):
-        #TODO: fix to account for multi-line variable definitions
-        #rope gives line numbers starting at 1
-        return self.parent.rope_scope.get_name(
-            self.name).get_definition_location()[1] - 1
-
+    def fs_path(self):
+        return self.parent.fs_path 
 
 
 class FunctionNode(Node):
-    def __init__(self, parent, path):
+    def __init__(self, parent, path, astroid_object):
         super(FunctionNode, self).__init__()
 
         self.parent = parent
         self.path = path
+        self._astroid_object = astroid_object
 
-        self.rope_object = self.parent.rope_scope.get_name(
-            self.name).get_object()
-        self.rope_scope = self.rope_object.get_scope()
+    @property
+    def fs_path(self):
+        return self.parent.fs_path

@@ -13,7 +13,7 @@ from code_monkey.node_query import NodeQuery
 
 TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
-    'test_project')
+    '../test_project')
 
 project = ProjectNode(TEST_PROJECT_PATH)
 q = NodeQuery([project])
@@ -27,7 +27,10 @@ def test_descent():
     assert_equal(len(q.children()), len(q.matches[0].children))
 
     #the number of nodes in the whole project tree, including the root
-    assert_equal(len(q.flatten()), 10)
+    assert_equal(len(q.flatten()), 9)
+    
+    #this would count __init__, as well
+    # assert_equal(len(q.flatten()), 11)
 
 
 def test_type_filters():

@@ -11,7 +11,7 @@ from code_monkey.node import (
 
 TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
-    'test_project')
+    '../test_project')
 
 TEST_CLASS_SOURCE = '''class Employee(object):
 
@@ -34,7 +34,7 @@ def test_node_tree():
     package = project.children[0]
     root_module = project.children[1]
 
-    nested_module = package.children[1]
+    nested_module = package.children[0]
 
     assert_is_instance(package, PackageNode)
     assert_is_instance(root_module, ModuleNode)
