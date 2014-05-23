@@ -165,6 +165,12 @@ class ProjectNode(Node):
     def __init__(self, project_path):
         super(ProjectNode, self).__init__()
 
+        #remove trailing slash if present, for consistency
+        #this is important when we use .split('/') to find the name of the
+        #project directory
+        if project_path.endswith('/'):
+            project_path = project_path[:-1]
+
         self._astroid_project = make_astroid_project(project_path)
         self.parent = None
         self.scope = None
