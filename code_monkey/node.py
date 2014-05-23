@@ -253,12 +253,20 @@ class ModuleNode(Node):
         self.parent = parent
         self.path = path
 
-        #TODO: this is a hacky way of getting the name of the folder that the
+        #TODO: below is a hacky way of getting the name of the folder that the
         #whole project is in (and it's broken under Windows). come up with
         #something more robust!
-        root_package_name = self.root.fs_path.split('/')[-1]
+        root_fs_path = self.root.fs_path
+
+        if '__init__.py' in os.listdir(root_fs_path):
+            #if root has an __init__, it's a package, and we need to add its
+            #name to the path
+            root_package_name = self.root.fs_path.split('/')[-1] + '.'
+        else:
+            root_package_name = ''
+
         self._astroid_object = self.root._astroid_project.get_module(
-            root_package_name + '.' + self.path)
+            root_package_name + self.path)
 
         self._fs_path = os.path.join(
             self.root.fs_path,
