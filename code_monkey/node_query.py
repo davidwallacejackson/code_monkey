@@ -34,7 +34,7 @@ class NodeQuery(object):
         children = []
 
         for match in self:
-            children.extend(match.children)
+            children.extend(match.children.values())
 
         return NodeQuery(children)
 

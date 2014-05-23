@@ -49,12 +49,11 @@ def tearDown():
 def test_preview():
     project = ProjectNode(TEST_PROJECT_PATH)
 
-    #brittle, might suggest that we need to refactor children into dicts
-    package = project.children[0]
+    package = project.children['lib']
 
-    nested_module = package.children[0]
+    nested_module = package.children['employee']
 
-    code_monkey_class = nested_module.children[1]
+    code_monkey_class = nested_module.children['CodeMonkey']
 
     source = code_monkey_class.get_source_code()
     source_lines = string_to_lines(source)

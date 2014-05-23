@@ -64,18 +64,17 @@ def test_node_tree():
 
     assert_equal(len(project.children), 2)
 
-    #brittle, might suggest that we need to refactor children into dicts
-    package = project.children[0]
-    root_module = project.children[1]
+    package = project.children['lib']
+    root_module = project.children['settings']
 
-    nested_module = package.children[0]
+    nested_module = package.children['employee']
 
     assert_is_instance(package, PackageNode)
     assert_is_instance(root_module, ModuleNode)
     assert_is_instance(nested_module, ModuleNode)
 
-    module_var = root_module.children[1]
-    class_node = nested_module.children[0]
+    module_var = root_module.children['MULTILINE_SETTING']
+    class_node = nested_module.children['Employee']
 
     assert_is_instance(module_var, VariableNode)
     assert_is_instance(class_node, ClassNode)

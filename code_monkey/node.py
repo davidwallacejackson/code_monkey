@@ -62,7 +62,7 @@ class Node(object):
 
     @property
     def children(self):
-        return []
+        return {}
 
     @property
     def name(self):
@@ -209,17 +209,17 @@ class ProjectNode(Node):
         #surface. Would be worth finding out why.
         child_names = get_modules(self.fs_path)
 
-        children = []
+        children = {}
 
         for name, is_package in child_names:
             if is_package:
-                children.append(PackageNode(
+                children[name] = PackageNode(
                     parent=self,
-                    path=name))
+                    path=name)
             else:
-                children.append(ModuleNode(
+                children[name] = ModuleNode(
                     parent=self,
-                    path=name))
+                    path=name)
 
         return children
 
@@ -250,17 +250,17 @@ class PackageNode(Node):
         so we use pkgutil to access them and build child nodes'''
 
         child_names = get_modules(self.fs_path)
-        children = []
+        children = {}
 
         for name, is_package in child_names:
             if is_package:
-                children.append(PackageNode(
+                children[name] = PackageNode(
                     parent=self,
-                    path=self.path + '.' + name))
+                    path=self.path + '.' + name)
             else:
-                children.append(ModuleNode(
+                children[name] = ModuleNode(
                     parent=self,
-                    path=self.path + '.' + name))
+                    path=self.path + '.' + name)
 
         return children
 
@@ -297,30 +297,34 @@ class ModuleNode(Node):
         #all of the children found by astroid:
 
         astroid_children = self._astroid_object.get_children()
-        children = []
+        children = {}
 
         for child in astroid_children:
             
             if isinstance(child, Class):
 
-                children.append(ClassNode(
+                children[child.name] = ClassNode(
                     parent=self,
                     path=self.path + '.' + child.name,
-                    astroid_object=child))
+                    astroid_object=child)
 
             elif isinstance(child, Function):
 
-                children.append(FunctionNode(
+                children[child.name] = FunctionNode(
                     parent=self,
                     path=self.path + '.' + child.name,
-                    astroid_object=child))
+                    astroid_object=child)
 
             elif isinstance(child, Assign):
                 #Assign is the class representing a variable assignment.
 
-                children.append(VariableNode(
+                #we don't know the name of the variable until we build the Node,
+                #so we build the node before adding it to the children dict
+                child_node = VariableNode(
                     parent=self,
-                    astroid_object=child))
+                    astroid_object=child)
+
+                children[child_node.name] = child_node
 
         return children
 
