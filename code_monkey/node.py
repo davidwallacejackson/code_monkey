@@ -9,6 +9,7 @@ from astroid.scoped_nodes import Class, Function
 from code_monkey.utils import (
     count_unterminated_in_source,
     find_termination,
+    line_column_to_absolute_index,
     string_to_lines)
 
 def get_modules(fs_path):
@@ -122,16 +123,28 @@ class Node(object):
             if not source_file:
                 return None
 
-            source_lines = source_file.readlines()
+            source = source_file.read()
 
-            starts_at = start_line
-            ends_at = end_line
+            starts_at = line_column_to_absolute_index(
+                source,
+                start_line,
+                start_column)
 
-            #take the lines that make up the source code and join them into one
-            #string
-            source = ''.join(source_lines[starts_at:(ends_at+1)])
-            source = source[start_column:]
+            ends_at = line_column_to_absolute_index(
+                source,
+                end_line + 1,
+                0) - 1
+
+            source = source[starts_at:(ends_at + 1)]
             return source
+
+    def get_file_source_code(self):
+        '''Return the text of the entire file containing Node.'''
+        with open(self.fs_path, 'r') as source_file:
+            if not source_file:
+                return None
+
+            return source_file.read()
 
     def get_source_code(self):
         '''return a string of the source code the Node represents'''
@@ -333,6 +346,12 @@ class ModuleNode(Node):
         #for modules, astroid gives 0 as the start line -- so we don't want to
         #subtract 1
         return self._astroid_object.fromlineno
+
+    @property
+    def start_column(self):
+        #for modules, astroid gives None as the column offset -- by our
+        #conventions, it should be 0
+        return 0
 
     @property
     def body_start_line(self):

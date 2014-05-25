@@ -44,6 +44,32 @@ def lines_to_string(input_lines):
     return ''.join(input_lines)
 
 
+def findnth(haystack, needle, n):
+    #snippet from: http://stackoverflow.com/questions/1883980/find-the-nth-occurrence-of-substring-in-a-string
+    parts= haystack.split(needle, n+1)
+    if len(parts)<=n+1:
+        return -1
+    return len(haystack)-len(parts[-1])-len(needle)
+
+
+def line_column_to_absolute_index(text, line, column):
+    '''Given line and column numbers (0-indexed) for a string text, return the
+    corresponding index in the entire string.'''
+
+    if line == 0:
+        line_start_index = 0
+    else:
+        #finding the nth newline gets you the position before the first column
+        #of a line -- we actually want the first column of the line to be
+        #"column 0"
+        line_start_index = findnth(text, '\n', line - 1) + 1
+
+    if column is None:
+        import ipdb; ipdb.set_trace()
+
+    return line_start_index + column
+
+
 def inject_at_line(source_lines, lines_to_inject, start_at):
     '''Return a copy of source_lines with lines_to_inject added in at index
     start_at. Lines in source_lines are not overwritten, but moved to accomodate
