@@ -16,6 +16,10 @@ COPY_PATH = path.join(
     path.dirname(path.realpath(__file__)),
     '../test_project__copy')
 
+RESOURCES_PATH = path.join(
+    path.dirname(path.realpath(__file__)),
+    'resources')
+
 EXPECTED_PREVIEW = '''Changes:
 
 --- {0}
@@ -46,8 +50,9 @@ def tearDown():
     #remove the copied test_project folder
     rmtree(COPY_PATH)
 
-def test_preview():
-    project = ProjectNode(TEST_PROJECT_PATH)
+def test_single_edit_to_file():
+    '''Test that we can make a single change to a single file.'''
+    project = ProjectNode(COPY_PATH)
 
     package = project.children['lib']
 
@@ -74,6 +79,18 @@ def test_preview():
     changeset.add_changes({
         code_monkey_class.fs_path: [change]})
     
+    #check that previews work as expected
     expected = EXPECTED_PREVIEW.format(code_monkey_class.fs_path)
     assert_equal(changeset.preview(), expected)
 
+    changeset.commit()
+
+    expected_file_path = path.join(RESOURCES_PATH, 'single_edit_expected')
+
+    #check that the edit worked properly
+    with open(code_monkey_class.fs_path) as modified_file:
+        with open(expected_file_path) as expected_file:
+            modified_source = modified_file.read()
+            expected_source = expected_file.read()
+
+            assert_equal(modified_source, expected_source)
