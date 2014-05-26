@@ -27,4 +27,3 @@ class CodeMonkey(Employee):
 
     def write_goddamned_login_page(self):
         print("...done.")
-

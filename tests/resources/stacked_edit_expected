@@ -3,6 +3,8 @@ from test_project import settings
 
 class Employee(object):
 
+    FIRST_INJECTED_VALUE = 'foo'
+
     def __init__(self, first_name, last_name):
         self.first_name = first_name
         self.last_name = last_name
@@ -13,6 +15,8 @@ class Employee(object):
 
 
 class CodeMonkey(Employee):
+
+    SECOND_INJECTED_VALUE = ['bar']
     """He writes code."""
     def __init__(self, *args, **kwargs):
         super(CodeMonkey, self).__init__(*args, **kwargs)
