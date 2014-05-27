@@ -301,12 +301,24 @@ class ModuleNode(Node):
         else:
             root_package_name = ''
 
-        self._astroid_object = self.root._astroid_project.get_module(
-            root_package_name + self.path)
-
         self._fs_path = os.path.join(
             self.root.fs_path,
             self.path.replace('.', '/')) + '.py'
+
+        try:
+            self._astroid_object = self.root._astroid_project.get_module(
+                root_package_name + self.path)
+        except KeyError:
+            #if the project root is not in the current Python path, astroid
+            #uses filenames to identify modules. And depending on what exactly
+            #is in the path, the project folder's name may or may not be
+            #appended
+
+            #TODO: find a way to force consistent behavior in astroid. ideally,
+            #we want it to always behave like the project under inspection is in
+            #the Python path
+            self._astroid_object = self.root._astroid_project.get_module(
+                self.fs_path)
 
     @property
     def children(self):
@@ -410,7 +422,15 @@ class VariableNode(Node):
         self._astroid_name = self._astroid_object.targets[0]
         self._astroid_value = self._astroid_object.value
 
-        self.path = self.parent.path + '.' + self._astroid_name.name
+        try:
+            self.path = self.parent.path + '.' + self._astroid_name.name
+        except AttributeError:
+            #'subscript' assignments (a[b] = ...) don't have a name in astroid.
+            #instead, we give them one by reading their source
+
+            #TODO: this can result in names containing dots, which is invalid.
+            #need a better solution
+            self.path = self.parent.path + '.' + self._astroid_name.as_string()
 
     def eval_body(self):
         '''Attempt to evaluate the body (i.e., the value) of this VariableNode
