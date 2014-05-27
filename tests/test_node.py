@@ -58,6 +58,14 @@ VARIABLE_BODY_SOURCE = '''{
 }
 '''
 
+VARIABLE_VALUE = {
+    'some_key': 42,
+    'other_key': {
+        'baz': 'quux'
+    }
+}
+
+
 def test_node_tree():
     '''Test that nodes are correctly created from source'''
     project = ProjectNode(TEST_PROJECT_PATH)
@@ -85,4 +93,4 @@ def test_node_tree():
     assert_equal(module_var.get_source_code(), VARIABLE_SOURCE)
     assert_equal(module_var.get_body_source_code(), VARIABLE_BODY_SOURCE)
 
-
+    assert_equal(module_var.eval_body(), VARIABLE_VALUE)

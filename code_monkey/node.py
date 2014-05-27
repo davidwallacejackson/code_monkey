@@ -412,6 +412,16 @@ class VariableNode(Node):
 
         self.path = self.parent.path + '.' + self._astroid_name.name
 
+    def eval_body(self):
+        '''Attempt to evaluate the body (i.e., the value) of this VariableNode
+        using ast.literal_eval (which will evaluate ONLY Python literals).
+
+        Return the value if successful, otherwise, return None.'''
+        try:
+            return literal_eval(self.get_body_source_code())
+        except (SyntaxError, ValueError):
+            return None
+
     @property
     def fs_path(self):
         return self.parent.fs_path
