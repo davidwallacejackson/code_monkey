@@ -42,18 +42,19 @@ def get_modules(fs_path):
 def make_astroid_project(project_path):
     project_files = []
 
-    for dirpath, dirname, filenames in os.walk(project_path):
-        #get all python files and add them to a list we can use with astroid's
-        #project builder
-        for filename in filenames:
-            if filename.endswith(".py"):
-                project_files.append(os.path.join(dirpath, filename))
+    # for dirpath, dirname, filenames in os.walk(project_path):
+    #     #get all python files and add them to a list we can use with astroid's
+    #     #project builder
+    #     for filename in filenames:
+    #         if filename.endswith(".py"):
+    #             project_files.append(os.path.join(dirpath, filename))
 
-                if filename == '__init__.py':
-                    #this is a package, so we should add the whole folder
-                    project_files.append(dirpath) 
+    #             if filename == '__init__.py':
+    #                 #this is a package, so we should add the whole folder
+    #                 project_files.append(dirpath) 
 
-    return AstroidManager().project_from_files(project_files)
+    # return AstroidManager().project_from_files(project_files)
+    return AstroidManager().project_from_files([project_path])
 
 
 class Node(object):
