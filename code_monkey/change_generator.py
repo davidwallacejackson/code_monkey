@@ -104,7 +104,7 @@ class ChangeGenerator(object):
             self.node.end_line + 1,
             0) - 1
 
-        return overwrite_file_region(
+        return Change(
             self.node.fs_path,
             from_index,
             to_index,
