@@ -2,7 +2,7 @@
 from os import path
 from shutil import copytree, rmtree
 
-from nose.tools import assert_equal, assert_is_instance
+from nose.tools import assert_equal, assert_is_instance, with_setup
 
 from code_monkey.node import ProjectNode
 from code_monkey.edit import ChangeSet
@@ -49,9 +49,7 @@ EXPECTED_PREVIEW_STACKED = '''Changes:
  
      def __init__(self, first_name, last_name):
          self.first_name = first_name
---- {0}
-+++ {0}
-@@ -13,6 +13,8 @@
+@@ -13,6 +15,8 @@
  
  
  class CodeMonkey(Employee):
@@ -62,7 +60,7 @@ EXPECTED_PREVIEW_STACKED = '''Changes:
          super(CodeMonkey, self).__init__(*args, **kwargs)
 '''
 
-def setUp():
+def setup_func():
     #create a copy of the test_project folder
     try:
         copytree(TEST_PROJECT_PATH, COPY_PATH)
@@ -72,39 +70,32 @@ def setUp():
         copytree(TEST_PROJECT_PATH, COPY_PATH)
 
 
-def tearDown():
+def teardown_func():
     #remove the copied test_project folder
     rmtree(COPY_PATH)
 
+
+#the decorator ensures that the setup/teardown happens for each test
+#we could also do this by making a test class with setUp/tearDown
+@with_setup(setup_func, teardown_func)
 def test_single_edit_to_file():
     '''Test that we can make a single change to a single file.'''
     project = ProjectNode(COPY_PATH)
-
     package = project.children['lib']
-
     nested_module = package.children['employee']
 
     code_monkey_class = nested_module.children['CodeMonkey']
-
     source = code_monkey_class.get_source_code()
-    source_lines = string_to_lines(source)
 
     inject_source = \
         "\n    def like_tab_and_mountain_dew(self):\n        return True\n"
-    inject_lines = string_to_lines(inject_source)
-
-    new_source_lines = inject_at_line(
-        source_lines,
-        inject_lines,
-        6)
-    new_source = lines_to_string(new_source_lines)
 
     changeset = ChangeSet()
-    change = code_monkey_class.generate_change(new_source)
+    change = code_monkey_class.change.inject_at_index(
+        210, inject_source)
 
-    changeset.add_changes({
-        code_monkey_class.fs_path: [change]})
-    
+    changeset.add_changes([change])
+
     #check that previews work as expected
     expected = EXPECTED_PREVIEW_SINGLE.format(code_monkey_class.fs_path)
     assert_equal(changeset.preview(), expected)
@@ -121,7 +112,7 @@ def test_single_edit_to_file():
 
             assert_equal(modified_source, expected_source)
 
-
+@with_setup(setup_func, teardown_func)
 def test_stacked_edits_to_file():
     '''Test that we can make multiple consecutive edits to a file in one
     ChangeSet.'''
@@ -131,37 +122,18 @@ def test_stacked_edits_to_file():
     employee_class = employee_module.children['Employee']
     code_monkey_class = employee_module.children['CodeMonkey']
 
-    employee_source = employee_class.get_source_code()
-    employee_lines = string_to_lines(employee_source)
-
-    code_monkey_source = code_monkey_class.get_source_code()
-    code_monkey_lines = string_to_lines(code_monkey_source)
-
     employee_inject_source = "\n    FIRST_INJECTED_VALUE = 'foo'\n"
-    employee_inject_lines = string_to_lines(employee_inject_source)
-
     code_monkey_inject_source = "\n    SECOND_INJECTED_VALUE = ['bar']\n"
-    code_monkey_inject_lines = string_to_lines(code_monkey_inject_source)
-
-    new_source_lines = inject_at_line(
-        employee_lines,
-        employee_inject_lines,
-        1)
-    new_source = lines_to_string(new_source_lines)
-
-    second_new_source_lines = inject_at_line(
-        code_monkey_lines,
-        code_monkey_inject_lines,
-        1)
-    second_new_source = lines_to_string(second_new_source_lines)
-
 
     changeset = ChangeSet()
-    change = employee_class.generate_change(new_source)
-    second_change = code_monkey_class.generate_change(second_new_source)
+    change = employee_class.change.inject_at_index(
+        24,
+        employee_inject_source)
+    second_change = code_monkey_class.change.inject_at_index(
+        28,
+        code_monkey_inject_source)
 
-    changeset.add_changes({
-        employee_module.fs_path: [change, second_change]})
+    changeset.add_changes([change, second_change])
     
     #check that previews work as expected
     expected = EXPECTED_PREVIEW_STACKED.format(employee_module.fs_path)

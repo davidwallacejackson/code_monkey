@@ -23,9 +23,6 @@ class CodeMonkey(Employee):
         self.is_up = False
         self.can_work = False
 
-    def like_tab_and_mountain_dew(self):
-        return True
-
     def get_up(self):
         self.is_up = True
 

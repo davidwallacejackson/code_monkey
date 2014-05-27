@@ -1,5 +1,4 @@
 '''Utility functions used by other modules.'''
-import difflib
 
 
 class InvalidEditException(Exception):
@@ -9,9 +8,9 @@ class InvalidEditException(Exception):
 class OverlapEditException(InvalidEditException):
     def __init__(self, path, conflicting_changes):
         error_message = "Changes overlap: \n"
-        error_message += change_as_string(path, conflicting_changes[0])
+        error_message += str(conflicting_changes[0])
         error_message += 'vs:\n'
-        error_message += change_as_string(path, conflicting_changes[1])
+        error_message += str(conflicting_changes[1])
 
         super(InvalidEditException, self).__init__(error_message)
 
@@ -93,30 +92,6 @@ def get_changed_copy(old_lines, change):
     transformed_lines.extend(old_lines[(ending_line + 1):])
 
     return transformed_lines
-
-
-def change_as_string(path, change):
-    '''Return a string showing the lines affected by change in path, before and
-    after the change is processed.
-
-    change is a tuple of the format (starting_line, ending_line, new_lines)'''
-
-    with open(path) as source_file:
-        source_lines = source_file.readlines()
-        transformed_lines = get_changed_copy(source_lines, change)
-
-        diff = difflib.unified_diff(
-            source_lines,
-            transformed_lines,
-            fromfile=path,
-            tofile=path)
-
-        output = ''
-
-        for line in diff:
-            output += line
-
-        return output
 
 
 def count_unterminated_in_source(text, start_char, term_char):

@@ -1,30 +1,29 @@
 '''Tools for editing source files.'''
-from operator import itemgetter
+import difflib
+from operator import attrgetter
 
 from code_monkey.utils import (
-    change_as_string,
     get_changed_copy,
     OverlapEditException)
 
 
-def ranges_overlap(first_range, second_range):
-    '''Return whether first_range and second_range overlap. Each range is a
-    tuple of the form (start_index, end_index). Used for preventing overlapping
-    changes.'''
+def changes_overlap(first_change, second_change):
+    '''Return whether first_change and second_change overlap.'''
 
-    first_start, first_end = first_range
-    second_start, second_end = second_range
-
-    if first_start >= second_start and first_start <= second_end:
+    if first_change.start >= second_change.start and \
+            first_change.start <= second_change.end:
         return True
 
-    if first_end >= second_start and first_end <= second_end:
+    if first_change.end >= second_change.start and \
+            first_change.end <= second_change.end:
         return True
 
-    if second_start >= first_start and second_start <= first_end:
+    if second_change.start >= first_change.start and \
+            second_change.start <= first_change.end:
         return True
 
-    if second_end >= first_start and second_end <= first_end:
+    if second_change.end >= first_change.start and \
+            second_change.end <= first_change.end:
         return True
 
     return False
@@ -34,38 +33,58 @@ class ChangeSet(object):
     '''A set of individual changes to make to various files. Can be previewed or
     committed.'''
 
-    def __init__(self, changes={}):
+    def __init__(self, changes=[]):
         self.changes = {}
         self.add_changes(changes)
 
     def add_changes(self, changes):
-        #changes is a dict of the format:
-        #    'file_path': [
-        #       (starting_line, ending_line, new_lines),
-        #    ]
-        #
-        #make sure to convert the new source into lists of strings before
-        #passing it in
+        for change in changes:
+            if not change.path in self.changes.keys():
+                self.changes[change.path] = []
 
-        for path, file_changes in changes.items():
-            if not path in self.changes.keys():
-                self.changes[path] = []
+            for old_change in self.changes[change.path]:
+                #check that our new change does not conflict (overlap) with
+                #existing changes
 
-            for new_change in file_changes:
-                for old_change in self.changes[path]:
-                    #check that our new change does not conflict (overlap) with
-                    #existing changes
+                if changes_overlap(old_change, change):
+                    #changes in the same file are not allowed to touch the
+                    #same lines
+                    raise OverlapEditException(
+                        path,
+                        (old_change, change))
 
-                    if ranges_overlap(
-                            (old_change[0], old_change[1]),
-                            (new_change[0], new_change[1])):
-                        #changes in the same file are not allowed to touch the
-                        #same lines
-                        raise OverlapEditException(
-                            path,
-                            (old_change, new_change))
+            self.changes[change.path].append(change)
 
-                self.changes[path].append(new_change)
+    def get_changed_source_for_path(self, path):
+        '''Get the source of the file at path after applying the changes in
+        ChangeSet.'''
+
+        sorted_changes = sorted(self.changes[path], key=attrgetter('start'))
+
+        #offset is the number of characters to ADD to the location of the
+        #next change. It can be negative, if previous changes were smaller
+        #than the source they replaced
+        offset = 0
+
+        #source changes with every run of the loop to reflect each separate
+        #change
+        with open(path) as read_file:
+            source = read_file.read()
+
+        for change in sorted_changes:
+            #adjust the indices to account for the offset
+            start = change.start + offset
+            end = change.end + offset
+
+            #apply the change to source
+            source = source[:start] + change.new_text + source[(end+1):]
+
+            #adjust offset based on the length of the change
+            old_length = (change.end - change.start) + 1
+            new_length = len(change.new_text)
+            offset += new_length - old_length
+
+        return source
 
     def preview(self):
         '''Get a human-readable preview of all the changes to the source
@@ -73,9 +92,27 @@ class ChangeSet(object):
 
         preview = 'Changes:\n\n'
 
-        for path, file_changes in self.changes.items():
-            for change in file_changes:
-                preview += change_as_string(path, change)
+        for path in self.changes.keys():
+            with open(path, 'r') as source_file:
+                old_source = source_file.read()
+
+            new_source = self.get_changed_source_for_path(path)
+
+            old_lines = old_source.splitlines(True)
+            new_lines = new_source.splitlines(True)
+            diff = difflib.unified_diff(
+                old_lines,
+                new_lines,
+                fromfile=path,
+                tofile=path)
+
+            path_preview = ''
+
+            for line in diff:
+                path_preview += line
+
+            preview += path_preview
+
 
         return preview
 
@@ -84,38 +121,7 @@ class ChangeSet(object):
 
         for path, file_changes in self.changes.items():
 
-            #gets the changes for this file as a list sorted by the
-            #starting_line of each change
-            sorted_changes = sorted(file_changes, key=itemgetter(0))
+            new_source = self.get_changed_source_for_path(path)
 
-            #offset is the number of lines to ADD to the location of the next
-            #change. It can be negative, if previous changes were smaller than
-            #the source they replaced
-            offset = 0
-
-            #lines changes with every run of the loop to reflect each separate
-            #change
-            with open(path) as read_file:
-                lines = read_file.readlines()
-
-            for change in sorted_changes:
-                #adjust the line numbers to account for the offset
-                starting_line, ending_line, new_lines = change
-                starting_line += offset
-                ending_line += offset
-
-                #apply the change to lines
-                lines = get_changed_copy(
-                    lines,
-                    (starting_line, ending_line, new_lines))
-
-                #adjust offset based on the length of the change
-                old_length = (ending_line - starting_line) + 1
-                new_length = len(new_lines)
-                offset += new_length - old_length
-
-            #lines now incorporates all changes, and is ready to be written out
-            #to the file
             with open(path, 'w') as write_file:
-                write_file.writelines(lines)
-
+                write_file.write(new_source)

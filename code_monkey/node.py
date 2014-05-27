@@ -6,6 +6,7 @@ from astroid.manager import AstroidManager
 from astroid.node_classes import Assign, AssName
 from astroid.scoped_nodes import Class, Function
 
+from code_monkey.change_generator import ChangeGenerator
 from code_monkey.utils import (
     count_unterminated_in_source,
     find_termination,
@@ -60,6 +61,8 @@ class Node(object):
     def __init__(self):
         self.parent = None
         self.path = None
+
+        self.change = ChangeGenerator(self)
 
     @property
     def children(self):
