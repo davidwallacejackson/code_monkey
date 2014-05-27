@@ -6,7 +6,7 @@ from astroid.manager import AstroidManager
 from astroid.node_classes import Assign, AssName
 from astroid.scoped_nodes import Class, Function
 
-from code_monkey.change_generator import ChangeGenerator
+from code_monkey.change import ChangeGenerator
 from code_monkey.utils import (
     count_unterminated_in_source,
     find_termination,
