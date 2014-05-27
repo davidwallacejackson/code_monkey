@@ -112,30 +112,39 @@ class ChangeGenerator(object):
     def inject_at_index(self, index, inject_source):
         '''Generate a change that inserts inject_source into the node, starting
         at index. index is relative to the beginning of the node, not the
-        beginning of the file.
+        beginning of the file.'''
+        #find the actual index in the source at which the node begins:
+        file_source = self.node.get_file_source_code()
 
-        TODO: rewrite so that the change only touches the lines modified. The
-        current implementation rewrites the whole node, though most of it
-        remains the same. A smaller change would allow multiple changes to
-        one node in a single changeset.'''
-        #the original source of this node
-        node_source = self.node.get_source_code()
+        node_from_index = line_column_to_absolute_index(
+            file_source,
+            self.node.start_line,
+            self.node.start_column)
 
-        #the node's source after we insert inject_source
-        new_source = node_source[:index] + inject_source + \
-            node_source[index:]
+        inject_index = node_from_index + index
 
-        return self.overwrite(new_source)
+        return Change(
+            self.node.fs_path,
+            inject_index,
+            inject_index,
+            inject_source)
 
     def inject_at_body_index(self, index, inject_source):
         '''Generate a change that inserts inject_source into the node, starting
         at index. index is relative to the beginning of the node body, not the
         beginning of the file.'''
-        #the original source of this node
-        body_source = self.node.get_body_source_code()
+        #find the actual index in the source at which the node begins:
+        file_source = self.node.get_file_source_code()
 
-        #the node's source after we insert inject_source
-        new_source = body_source[:index] + inject_source + \
-            body_source[index:]
+        node_from_index = line_column_to_absolute_index(
+            file_source,
+            self.node.body_start_line,
+            self.node.body_start_column)
 
-        return self.overwrite_body(new_source)
+        inject_index = node_from_index + index
+
+        return Change(
+            self.node.fs_path,
+            inject_index,
+            inject_index,
+            inject_source)
