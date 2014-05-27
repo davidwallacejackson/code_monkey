@@ -11,19 +11,19 @@ def changes_overlap(first_change, second_change):
     '''Return whether first_change and second_change overlap.'''
 
     if first_change.start >= second_change.start and \
-            first_change.start <= second_change.end:
+            first_change.start < second_change.end:
         return True
 
     if first_change.end >= second_change.start and \
-            first_change.end <= second_change.end:
+            first_change.end < second_change.end:
         return True
 
     if second_change.start >= first_change.start and \
-            second_change.start <= first_change.end:
+            second_change.start < first_change.end:
         return True
 
     if second_change.end >= first_change.start and \
-            second_change.end <= first_change.end:
+            second_change.end < first_change.end:
         return True
 
     return False
@@ -77,10 +77,10 @@ class ChangeSet(object):
             end = change.end + offset
 
             #apply the change to source
-            source = source[:start] + change.new_text + source[(end+1):]
+            source = source[:start] + change.new_text + source[end:]
 
             #adjust offset based on the length of the change
-            old_length = (change.end - change.start) + 1
+            old_length = change.end - change.start
             new_length = len(change.new_text)
             offset += new_length - old_length
 

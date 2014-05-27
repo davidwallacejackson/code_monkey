@@ -11,7 +11,7 @@ from code_monkey.utils import line_column_to_absolute_index
 
 class Change(object):
     '''A single change to make to a single file. Replaces the file content
-    from indices start through end (inclusive) with new_text.'''
+    from indices start through (end-1) with new_text.'''
     def __init__(self, path, start, end, new_text):
         self.path = path
         self.start = start
@@ -23,7 +23,7 @@ class Change(object):
             source = source_file.read()
 
         new_source = (
-            source[:self.start] + self.new_text + source[(self.end+1):])
+            source[:self.start] + self.new_text + source[self.end:])
 
         #difflib works on lists of line strings, so we convert the source and
         #its replacement to lists.
@@ -71,12 +71,11 @@ class ChangeGenerator(object):
             self.node.start_line,
             self.node.start_column)
 
-        #to get the last index, we want the end of the previous line -- so we
-        #get the beginning of the line after, and back up
+        #the to_index is the beginning of the line AFTER the node
         to_index = line_column_to_absolute_index(
             file_source,
             self.node.end_line + 1,
-            0) - 1
+            0)
 
         return Change(
             self.node.fs_path,
@@ -97,12 +96,11 @@ class ChangeGenerator(object):
             self.node.body_start_line,
             self.node.body_start_column)
 
-        #to get the last index, we want the end of the previous line -- so we
-        #get the beginning of the line after, and back up
+        #the to_index is the beginning of the line AFTER the node body
         to_index = line_column_to_absolute_index(
             file_source,
             self.node.end_line + 1,
-            0) - 1
+            0)
 
         return Change(
             self.node.fs_path,
