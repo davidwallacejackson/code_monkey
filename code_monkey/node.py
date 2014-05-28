@@ -144,9 +144,9 @@ class Node(object):
             self.body_end_line + 1,
             0)
  
-    def _get_source_region(self, start_line, start_column, end_line):
-        '''return a string of the source code from start_line, start_column
-        through end_line.'''
+    def _get_source_region(self, start_index, end_index):
+        '''return a substring of the source code starting from start_index up to
+        but not including end_index'''
 
         with open(self.fs_path, 'r') as source_file:
 
@@ -154,18 +154,8 @@ class Node(object):
                 return None
 
             source = source_file.read()
+            source = source[start_index:end_index]
 
-            starts_at = line_column_to_absolute_index(
-                source,
-                start_line,
-                start_column)
-
-            ends_at = line_column_to_absolute_index(
-                source,
-                end_line + 1,
-                0) - 1
-
-            source = source[starts_at:(ends_at + 1)]
             return source
 
     def get_file_source_code(self):
@@ -180,9 +170,8 @@ class Node(object):
         '''return a string of the source code the Node represents'''
 
         return self._get_source_region(
-            self.start_line,
-            self.start_column,
-            self.end_line)
+            self.start_index,
+            self.end_index)
 
     def get_body_source_code(self):
         '''return a string of only the body of the node -- i.e., excluding the
@@ -190,9 +179,8 @@ class Node(object):
         body. For a Variable, that's the right hand of the assignment. For a
         Module, it's the same as get_source_code().'''
         return self._get_source_region(
-            self.body_start_line,
-            self.body_start_column,
-            self.body_end_line)
+            self.body_start_index,
+            self.body_end_index)
 
 
     def __unicode__(self):
@@ -531,11 +519,14 @@ class VariableNode(Node):
 
         #should probably submit a bug report for astroid, too
 
-        astroid_end_line = self._astroid_value.tolineno - 1
+        astroid_end_index = line_column_to_absolute_index(
+            self.get_file_source_code(),
+            self._astroid_value.tolineno,
+            0)
+
         source_via_astroid = self._get_source_region(
-            self.body_start_line,
-            self.body_start_column,
-            astroid_end_line)
+            self.body_start_index,
+            astroid_end_index)
 
         unclosed_dict = {}
 
@@ -562,7 +553,7 @@ class VariableNode(Node):
         if unclosed_count == 0:
             #if there are no unclosed blocks, then astroid found the right end
             #line, and we can just return it
-            return astroid_end_line
+            return self._astroid_value.tolineno - 1
 
         #otherwise, we have to dig through the source looking for the end
         #ourselves
@@ -573,7 +564,7 @@ class VariableNode(Node):
 
         end_line = find_termination(
             source_lines,
-            astroid_end_line,
+            self._astroid_value.tolineno - 1,
             unclosed_dict)
 
         return end_line

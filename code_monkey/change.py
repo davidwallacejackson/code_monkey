@@ -92,15 +92,9 @@ class ChangeGenerator(object):
         '''Generate a change that inserts inject_source into the node, starting
         at index. index is relative to the beginning of the node, not the
         beginning of the file.'''
+
         #find the actual index in the source at which the node begins:
-        file_source = self.node.get_file_source_code()
-
-        node_from_index = line_column_to_absolute_index(
-            file_source,
-            self.node.start_line,
-            self.node.start_column)
-
-        inject_index = node_from_index + index
+        inject_index = self.node.start_index + index
 
         return Change(
             self.node.fs_path,
@@ -112,15 +106,9 @@ class ChangeGenerator(object):
         '''Generate a change that inserts inject_source into the node, starting
         at index. index is relative to the beginning of the node body, not the
         beginning of the file.'''
+
         #find the actual index in the source at which the node begins:
-        file_source = self.node.get_file_source_code()
-
-        node_from_index = line_column_to_absolute_index(
-            file_source,
-            self.node.body_start_line,
-            self.node.body_start_column)
-
-        inject_index = node_from_index + index
+        inject_index = self.node.body_start_index + index
 
         return Change(
             self.node.fs_path,
