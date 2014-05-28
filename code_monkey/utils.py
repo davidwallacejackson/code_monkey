@@ -63,9 +63,6 @@ def line_column_to_absolute_index(text, line, column):
         #"column 0"
         line_start_index = findnth(text, '\n', line - 1) + 1
 
-    if column is None:
-        import ipdb; ipdb.set_trace()
-
     return line_start_index + column
 
 

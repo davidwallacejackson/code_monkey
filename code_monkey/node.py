@@ -385,7 +385,6 @@ class ClassNode(Node):
     @property
     def body_start_line(self):
         #TODO: account for multi-line class signatures
-        import ipdb; ipdb.set_trace()
         return self.start_line + 1
 
     @property
