@@ -22,6 +22,12 @@ class CodeMonkey(Employee):
     def like_tab_and_mountain_dew(self):
         return True
 
+    things_code_monkey_like = [
+        'fritos',
+        'tab',
+        'mountain_dew',
+        'you']
+
     def get_up(self):
         self.is_up = True
 

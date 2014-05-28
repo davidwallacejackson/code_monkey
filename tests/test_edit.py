@@ -30,9 +30,9 @@ EXPECTED_PREVIEW_SINGLE = '''Changes:
 +    def like_tab_and_mountain_dew(self):
 +        return True
 +
-     def get_up(self):
-         self.is_up = True
- 
+     things_code_monkey_like = [
+         'fritos',
+         'tab',
 '''
 
 EXPECTED_PREVIEW_STACKED = '''Changes:

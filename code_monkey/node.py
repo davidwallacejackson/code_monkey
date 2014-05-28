@@ -364,6 +364,41 @@ class ClassNode(Node):
         self._astroid_object = astroid_object
 
     @property
+    def children(self):
+        #all of the children found by astroid:
+
+        astroid_children = self._astroid_object.get_children()
+        children = {}
+
+        for child in astroid_children:
+
+            if isinstance(child, Class):
+
+                children[child.name] = ClassNode(
+                    parent=self,
+                    path=self.path + '.' + child.name,
+                    astroid_object=child)
+
+            elif isinstance(child, Function):
+
+                children[child.name] = FunctionNode(
+                    parent=self,
+                    path=self.path + '.' + child.name,
+                    astroid_object=child)
+
+            elif isinstance(child, Assign):
+                #Assign is the class representing a variable assignment.
+
+                #we don't know the name of the variable until we build the Node,
+                #so we build the node before adding it to the children dict
+                child_node = VariableNode(
+                    parent=self,
+                    astroid_object=child)
+
+                children[child_node.name] = child_node
+
+        return children
+    @property
     def fs_path(self):
         return self.parent.fs_path
 

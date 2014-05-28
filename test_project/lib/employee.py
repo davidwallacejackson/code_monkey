@@ -19,6 +19,12 @@ class CodeMonkey(Employee):
         self.is_up = False
         self.can_work = False
 
+    things_code_monkey_like = [
+        'fritos',
+        'tab',
+        'mountain_dew',
+        'you']
+
     def get_up(self):
         self.is_up = True
 

@@ -27,8 +27,8 @@ def test_descent():
     assert_equal(len(q.children()), len(q.matches[0].children))
 
     #the number of nodes in the whole project tree, including the root
-    assert_equal(len(q.flatten()), 9)
-    
+    assert_equal(len(q.flatten()), 16)
+
     #this would count __init__, as well
     # assert_equal(len(q.flatten()), 11)
 
@@ -58,8 +58,7 @@ def test_find_filters():
     for match in q.flatten().path_contains('lib'):
         assert_not_equal(match.name, 'settings')
 
-    code_monkey_class_query = q.flatten().source_contains(
+    code_monkey_class_query = q.flatten().classes().source_contains(
         'def get_coffee(self)')
 
-    assert_equal(len(code_monkey_class_query), 2)
     assert_equal(code_monkey_class_query[0].name, 'CodeMonkey')
