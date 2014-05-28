@@ -2,6 +2,7 @@ from os import path
 
 from nose.tools import assert_equal
 
+from code_monkey.node_query import project_query
 from code_monkey.change import Change
 
 TEST_PROJECT_PATH = path.join(
@@ -25,3 +26,18 @@ def test_str():
         'foobar\n')
 
     assert_equal(str(change), EXPECTED_PREVIEW)
+
+
+def test_change_value():
+    '''Test that we can take a VariableNode and overwrite its current body with
+    code generated from a new python value.'''
+
+    q = project_query(TEST_PROJECT_PATH)
+
+    setting_node = q.flatten().path_contains('MULTILINE_SETTING').matches[0]
+
+    change = setting_node.change.value(42)
+    assert_equal(change.new_text, '42')
+
+    change = setting_node.change.value([42])
+    assert_equal(change.new_text, '[\n    42,\n]')

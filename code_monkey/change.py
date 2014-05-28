@@ -7,6 +7,7 @@ do not conflict, provide previews, and commit changes to disk.
 '''
 import difflib
 
+from code_monkey.format import format_source
 from code_monkey.utils import line_column_to_absolute_index
 
 class Change(object):
@@ -148,3 +149,17 @@ class ChangeGenerator(object):
             inject_index,
             inject_index,
             inject_source)
+
+
+class VariableChangeGenerator(ChangeGenerator):
+
+    def value(self, value):
+        '''Generate a change that changes the value of the variable to value.
+        Value must be an int, string, bool, list, tuple, or dict. Lists, tuples,
+        and dicts, must ALSO only contain ints, strings, bools, lists, tuples,
+        or dicts.
+
+        To put it another way, .value() takes in a value, converts it to Python
+        source, and then overwrites the variable body with that source.'''
+
+        return self.overwrite_body(format_source(value))
