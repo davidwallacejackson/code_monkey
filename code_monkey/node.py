@@ -166,18 +166,18 @@ class Node(object):
 
             return source_file.read()
 
-    def get_source_code(self):
+    def get_source(self):
         '''return a string of the source code the Node represents'''
 
         return self._get_source_region(
             self.start_index,
             self.end_index)
 
-    def get_body_source_code(self):
+    def get_body_source(self):
         '''return a string of only the body of the node -- i.e., excluding the
         declaration. For a Class or Function, that means the class or function
         body. For a Variable, that's the right hand of the assignment. For a
-        Module, it's the same as get_source_code().'''
+        Module, it's the same as get_source().'''
         return self._get_source_region(
             self.body_start_index,
             self.body_end_index)
@@ -473,7 +473,7 @@ class VariableNode(Node):
 
         Return the value if successful, otherwise, return None.'''
         try:
-            return literal_eval(self.get_body_source_code())
+            return literal_eval(self.get_body_source())
         except (SyntaxError, ValueError):
             return None
 

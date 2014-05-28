@@ -87,10 +87,10 @@ def test_node_tree():
     assert_is_instance(module_var, VariableNode)
     assert_is_instance(class_node, ClassNode)
 
-    assert_equal(class_node.get_source_code(), TEST_CLASS_SOURCE)
-    assert_equal(class_node.get_body_source_code(), CLASS_BODY_SOURCE)
+    assert_equal(class_node.get_source(), TEST_CLASS_SOURCE)
+    assert_equal(class_node.get_body_source(), CLASS_BODY_SOURCE)
 
-    assert_equal(module_var.get_source_code(), VARIABLE_SOURCE)
-    assert_equal(module_var.get_body_source_code(), VARIABLE_BODY_SOURCE)
+    assert_equal(module_var.get_source(), VARIABLE_SOURCE)
+    assert_equal(module_var.get_body_source(), VARIABLE_BODY_SOURCE)
 
     assert_equal(module_var.eval_body(), VARIABLE_VALUE)

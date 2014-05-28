@@ -121,7 +121,7 @@ class ChangeGenerator(object):
         index.'''
 
         character_index_of_line = line_column_to_absolute_index(
-            self.node.get_source_code(),
+            self.node.get_source(),
             line_index,
             0)
 
@@ -132,7 +132,7 @@ class ChangeGenerator(object):
         index.'''
 
         character_index_of_line = line_column_to_absolute_index(
-            self.node.get_body_source_code(),
+            self.node.get_body_source(),
             line_index,
             0)
 

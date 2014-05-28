@@ -84,7 +84,7 @@ def test_single_edit_to_file():
     nested_module = package.children['employee']
 
     code_monkey_class = nested_module.children['CodeMonkey']
-    source = code_monkey_class.get_source_code()
+    source = code_monkey_class.get_source()
 
     inject_source = \
         "\n    def like_tab_and_mountain_dew(self):\n        return True\n"
