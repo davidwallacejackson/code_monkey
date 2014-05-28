@@ -44,19 +44,19 @@ EXPECTED_PREVIEW_STACKED = '''Changes:
  
  class Employee(object):
 +
-+    FIRST_INJECTED_VALUE = 'foo'
++    FIRST_INJECTED_VALUE = \'foo\'
  
      def __init__(self, first_name, last_name):
          self.first_name = first_name
-@@ -13,6 +15,8 @@
- 
+@@ -14,6 +16,8 @@
  
  class CodeMonkey(Employee):
-+
-+    SECOND_INJECTED_VALUE = ['bar']
      """He writes code."""
++
++    SECOND_INJECTED_VALUE = [\'bar\']
      def __init__(self, *args, **kwargs):
          super(CodeMonkey, self).__init__(*args, **kwargs)
+         self.is_up = False
 '''
 
 def setup_func():
@@ -90,8 +90,8 @@ def test_single_edit_to_file():
         "\n    def like_tab_and_mountain_dew(self):\n        return True\n"
 
     changeset = ChangeSet()
-    change = code_monkey_class.change.inject_at_index(
-        210, inject_source)
+    change = code_monkey_class.change.inject_at_line(
+        6, inject_source)
 
     changeset.add_changes([change])
 
@@ -125,15 +125,15 @@ def test_stacked_edits_to_file():
     code_monkey_inject_source = "\n    SECOND_INJECTED_VALUE = ['bar']\n"
 
     changeset = ChangeSet()
-    change = employee_class.change.inject_at_index(
-        24,
+    change = employee_class.change.inject_at_line(
+        1,
         employee_inject_source)
-    second_change = code_monkey_class.change.inject_at_index(
-        28,
+    second_change = code_monkey_class.change.inject_at_line(
+        2,
         code_monkey_inject_source)
 
     changeset.add_changes([change, second_change])
-    
+
     #check that previews work as expected
     expected = EXPECTED_PREVIEW_STACKED.format(employee_module.fs_path)
     assert_equal(changeset.preview(), expected)

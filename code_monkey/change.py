@@ -116,6 +116,29 @@ class ChangeGenerator(object):
             inject_index,
             inject_source)
 
+    def inject_at_line(self, line_index, inject_source):
+        '''As inject_at_index, but takes a line index instead of a character
+        index.'''
+
+        character_index_of_line = line_column_to_absolute_index(
+            self.node.get_source_code(),
+            line_index,
+            0)
+
+        return self.inject_at_index(character_index_of_line, inject_source)
+
+    def inject_at_body_index(self, line_index, inject_source):
+        '''As inject_at_index, but takes a line index instead of a character
+        index.'''
+
+        character_index_of_line = line_column_to_absolute_index(
+            self.node.get_body_source_code(),
+            line_index,
+            0)
+
+        return self.inject_at_body_index(
+            character_index_of_line, inject_source)
+
 
 class VariableChangeGenerator(ChangeGenerator):
 

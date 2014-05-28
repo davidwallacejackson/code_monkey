@@ -15,9 +15,9 @@ class Employee(object):
 
 
 class CodeMonkey(Employee):
+    """He writes code."""
 
     SECOND_INJECTED_VALUE = ['bar']
-    """He writes code."""
     def __init__(self, *args, **kwargs):
         super(CodeMonkey, self).__init__(*args, **kwargs)
         self.is_up = False
