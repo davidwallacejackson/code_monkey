@@ -156,21 +156,6 @@ class Node(object):
             self.body_start_column,
             self.body_end_line)
 
-    def generate_change(self, new_source):
-        '''return a change (for use with ChangeSet) that overwrites the contents
-        of this Node and replaces them with new_source. Only valid on Nodes with
-        a source_file.
-
-        A change is a tuple of the form (starting_line, ending_line, new_lines),
-        where starting_line and ending_line are line indices and new_lines is a
-        list of line strings.'''
-
-        starts_at = self.start_line
-        ends_at = self.end_line
-
-        new_lines = string_to_lines(new_source)
-
-        return (starts_at, ends_at, new_lines)
 
     def __unicode__(self):
         return '{}: {}'.format(

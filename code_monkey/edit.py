@@ -2,9 +2,7 @@
 import difflib
 from operator import attrgetter
 
-from code_monkey.utils import (
-    get_changed_copy,
-    OverlapEditException)
+from code_monkey.utils import OverlapEditException
 
 
 def changes_overlap(first_change, second_change):

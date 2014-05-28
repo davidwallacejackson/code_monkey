@@ -66,31 +66,6 @@ def line_column_to_absolute_index(text, line, column):
     return line_start_index + column
 
 
-def inject_at_line(source_lines, lines_to_inject, start_at):
-    '''Return a copy of source_lines with lines_to_inject added in at index
-    start_at. Lines in source_lines are not overwritten, but moved to accomodate
-    the new content.'''
-
-    output = source_lines[:start_at]
-    output.extend(lines_to_inject)
-    output.extend(source_lines[start_at:])
-
-    return output
-
-
-def get_changed_copy(old_lines, change):
-    '''Return a copy of old_lines (a list of line strings) with change
-    applied.'''
-
-    starting_line, ending_line, new_lines = change
-
-    transformed_lines = old_lines[:starting_line]
-    transformed_lines.extend(new_lines)
-    transformed_lines.extend(old_lines[(ending_line + 1):])
-
-    return transformed_lines
-
-
 def count_unterminated_in_source(text, start_char, term_char):
     '''Given a string text and substrings start_char and term_char, return the
     number of start_char without a matching term_char. Use, for instance, to

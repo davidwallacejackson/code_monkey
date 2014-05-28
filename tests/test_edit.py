@@ -6,7 +6,6 @@ from nose.tools import assert_equal, assert_is_instance, with_setup
 
 from code_monkey.node import ProjectNode
 from code_monkey.edit import ChangeSet
-from code_monkey.utils import inject_at_line, lines_to_string, string_to_lines
 
 TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
