@@ -9,7 +9,7 @@ TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
     '../test_project')
 
-EXPECTED_PREVIEW = '''--- /Users/djackson/git/code_monkey/tests/../test_project/settings.py
+EXPECTED_STR = '''--- /Users/djackson/git/code_monkey/tests/../test_project/settings.py
 +++ /Users/djackson/git/code_monkey/tests/../test_project/settings.py
 @@ -1,3 +1,4 @@
 +foobar
@@ -25,7 +25,7 @@ def test_str():
         0,
         'foobar\n')
 
-    assert_equal(str(change), EXPECTED_PREVIEW)
+    assert_equal(str(change), EXPECTED_STR)
 
 
 def test_change_value():

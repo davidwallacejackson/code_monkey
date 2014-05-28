@@ -84,11 +84,11 @@ class ChangeSet(object):
 
         return source
 
-    def preview(self):
-        '''Get a human-readable preview of all the changes to the source
-        encompassed by this ChangeSet.'''
+    def diff(self):
+        '''Get a diff (as a string) of all the changes to the source encompassed
+        by this ChangeSet.'''
 
-        preview = 'Changes:\n\n'
+        output = 'Changes:\n\n'
 
         for path in self.changes.keys():
             with open(path, 'r') as source_file:
@@ -104,15 +104,15 @@ class ChangeSet(object):
                 fromfile=path,
                 tofile=path)
 
-            path_preview = ''
+            path_diff = ''
 
             for line in diff:
-                path_preview += line
+                path_diff += line
 
-            preview += path_preview
+            output += path_diff
 
 
-        return preview
+        return output
 
     def commit(self):
         '''Write these changes to the filesystem.'''

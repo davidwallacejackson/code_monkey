@@ -3,7 +3,7 @@ single Change object.
 
 Nothing in this module actually overwrites files: that occurs in edit, where
 Changes are grouped into ChangeSets. ChangeSets check that individual changes
-do not conflict, provide previews, and commit changes to disk.
+do not conflict, provide diffs, and commit changes to disk.
 '''
 import difflib
 

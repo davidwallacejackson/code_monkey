@@ -1,4 +1,4 @@
-'''Test changesets, previews, and committing changes.'''
+'''Test changesets, diffs, and committing changes.'''
 from os import path
 from shutil import copytree, rmtree
 
@@ -19,7 +19,7 @@ RESOURCES_PATH = path.join(
     path.dirname(path.realpath(__file__)),
     'resources')
 
-EXPECTED_PREVIEW_SINGLE = '''Changes:
+EXPECTED_DIFF_SINGLE = '''Changes:
 
 --- {0}
 +++ {0}
@@ -35,7 +35,7 @@ EXPECTED_PREVIEW_SINGLE = '''Changes:
          'tab',
 '''
 
-EXPECTED_PREVIEW_STACKED = '''Changes:
+EXPECTED_DIFF_STACKED = '''Changes:
 
 --- {0}
 +++ {0}
@@ -95,9 +95,9 @@ def test_single_edit_to_file():
 
     changeset.add_changes([change])
 
-    #check that previews work as expected
-    expected = EXPECTED_PREVIEW_SINGLE.format(code_monkey_class.fs_path)
-    assert_equal(changeset.preview(), expected)
+    #check that diffs work as expected
+    expected = EXPECTED_DIFF_SINGLE.format(code_monkey_class.fs_path)
+    assert_equal(changeset.diff(), expected)
 
     changeset.commit()
 
@@ -134,9 +134,9 @@ def test_stacked_edits_to_file():
 
     changeset.add_changes([change, second_change])
 
-    #check that previews work as expected
-    expected = EXPECTED_PREVIEW_STACKED.format(employee_module.fs_path)
-    assert_equal(changeset.preview(), expected)
+    #check that diffs work as expected
+    expected = EXPECTED_DIFF_STACKED.format(employee_module.fs_path)
+    assert_equal(changeset.diff(), expected)
 
     changeset.commit()
 
