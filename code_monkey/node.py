@@ -108,6 +108,42 @@ class Node(object):
     def start_column(self):
         return self._astroid_object.col_offset
 
+    @property
+    def start_index(self):
+        '''The character index of the beginning of the node, relative to the
+        entire source file.'''
+        return line_column_to_absolute_index(
+            self.get_file_source_code(),
+            self.start_line,
+            self.start_column)
+
+    @property
+    def end_index(self):
+        '''The character index of the character after the end of the node,
+        relative to the entire source file.'''
+        return line_column_to_absolute_index(
+            self.get_file_source_code(),
+            self.end_line + 1,
+            0)
+
+    @property
+    def body_start_index(self):
+        '''The character index of the beginning of the node body, relative to
+        the entire source file.'''
+        return line_column_to_absolute_index(
+            self.get_file_source_code(),
+            self.body_start_line,
+            self.body_start_column)
+
+    @property
+    def body_end_index(self):
+        '''The character index of the character after the end of the node body,
+        relative to the entire source file.'''
+        return line_column_to_absolute_index(
+            self.get_file_source_code(),
+            self.body_end_line + 1,
+            0)
+ 
     def _get_source_region(self, start_line, start_column, end_line):
         '''return a string of the source code from start_line, start_column
         through end_line.'''

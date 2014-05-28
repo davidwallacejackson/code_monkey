@@ -67,21 +67,10 @@ class ChangeGenerator(object):
         #find the actual index in the source at which the node begins:
         file_source = self.node.get_file_source_code()
 
-        from_index = line_column_to_absolute_index(
-            file_source,
-            self.node.start_line,
-            self.node.start_column)
-
-        #the to_index is the beginning of the line AFTER the node
-        to_index = line_column_to_absolute_index(
-            file_source,
-            self.node.end_line + 1,
-            0)
-
         return Change(
             self.node.fs_path,
-            from_index,
-            to_index,
+            self.node.start_index,
+            self.node.end_index,
             new_source)
 
     def overwrite_body(self, new_source):
@@ -92,21 +81,10 @@ class ChangeGenerator(object):
         #find the actual index in the source at which the node begins:
         file_source = self.node.get_file_source_code()
 
-        from_index = line_column_to_absolute_index(
-            file_source,
-            self.node.body_start_line,
-            self.node.body_start_column)
-
-        #the to_index is the beginning of the line AFTER the node body
-        to_index = line_column_to_absolute_index(
-            file_source,
-            self.node.end_line + 1,
-            0)
-
         return Change(
             self.node.fs_path,
-            from_index,
-            to_index,
+            self.node.body_start_index,
+            self.node.body_end_index,
             new_source)
 
 
