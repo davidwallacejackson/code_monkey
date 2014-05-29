@@ -6,9 +6,9 @@ MULTILINE_SETTING = {
 
 
         'baz': 'quux'
-    }
+    }  #some comment
 
 
-}
+}  #some other comment
 
 BASE_PAY = 100

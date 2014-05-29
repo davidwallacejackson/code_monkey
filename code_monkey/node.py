@@ -128,7 +128,7 @@ class Node(object):
 
     @property
     def body_end_column(self):
-        return self.body_end_column
+        return self.end_column
 
 
     @property
@@ -165,7 +165,7 @@ class Node(object):
         return line_column_to_absolute_index(
             self.get_file_source_code(),
             self.body_end_line,
-            0)
+            self.body_end_column)
  
     def _get_source_region(self, start_index, end_index):
         '''return a substring of the source code starting from start_index up to
@@ -552,19 +552,27 @@ class VariableNode(Node):
 
         #scan through the lines in reverse order, looking for the end of the
         #node
+
+        #len(lines_to_scan) - (line_index + 1) is the index of a line in
+        #lines_to_scan -- basically, it takes us from the 'reversed'
+        #indices that we get in line_index back to real, from-the-beginning
+        #indices
         for line_index, line in enumerate(reversed(lines_to_scan)):
+
             #remove comments from line
             if '#' in line:
                 line = line[0:line.find('#')]
 
-            for char_index, char in enumerate(line):
+            for char_index, char in enumerate(reversed(line)):
                 if char == terminating_char:
                     line_index_in_file = astroid_end_line + (
-                        len(lines_to_scan)-line_index)
+                        len(lines_to_scan) - (line_index + 1))
+                    char_index_in_line = len(line) - char_index
                     return line_column_to_absolute_index(
                         self.get_file_source_code(),
                         line_index_in_file,
-                        char_index)
+                        char_index_in_line)
+
 
     #for variable nodes, it's easiest to find an absolute end index first, then
     #work backwards to get line and column numbers

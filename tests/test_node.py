@@ -40,11 +40,10 @@ VARIABLE_SOURCE = '''MULTILINE_SETTING = {
 
 
         'baz': 'quux'
-    }
+    }  #some comment
 
 
-}
-'''
+}'''
 
 VARIABLE_BODY_SOURCE = '''{
     'some_key': 42,
@@ -52,11 +51,10 @@ VARIABLE_BODY_SOURCE = '''{
 
 
         'baz': 'quux'
-    }
+    }  #some comment
 
 
-}
-'''
+}'''
 
 VARIABLE_VALUE = {
     'some_key': 42,
