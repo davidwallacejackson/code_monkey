@@ -130,14 +130,13 @@ class NodeQuery(object):
         return NodeQuery(filter_matches)
 
 
-    def has_name(self, find_me):
-        '''Match nodes whose scope contains a name find_me.'''
+    def has_child(self, find_me):
+        '''Match nodes who have an immediate child with the name find_me'''
 
         filter_matches = []
 
         for match in self:
-            if match.rope_scope and \
-                    find_me in match.rope_scope.get_names().keys():
+            if find_me in match.children.keys():
                 filter_matches.append(match)
 
         return NodeQuery(filter_matches)

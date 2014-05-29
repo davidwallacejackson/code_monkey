@@ -59,3 +59,8 @@ def test_find_filters():
         'def get_coffee(self)')
 
     assert_equal(code_monkey_class_query[0].name, 'CodeMonkey')
+
+    also_code_monkey_class_query = q.flatten().classes().has_child(
+        'things_code_monkey_like')
+
+    assert_equal(also_code_monkey_class_query[0].name, 'CodeMonkey')
