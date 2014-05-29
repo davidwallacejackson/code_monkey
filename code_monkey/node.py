@@ -7,7 +7,10 @@ from astroid.node_classes import Assign, AssName
 from astroid.scoped_nodes import Class, Function
 from logilab.common.modutils import modpath_from_file
 
-from code_monkey.change import ChangeGenerator, VariableChangeGenerator
+from code_monkey.change import (
+    ChangeGenerator,
+    SourceChangeGenerator,
+    VariableChangeGenerator)
 from code_monkey.utils import (
     absolute_index_to_line_column,
     line_column_to_absolute_index)
@@ -310,6 +313,10 @@ class ModuleNode(Node):
         self._astroid_object = AstroidManager().ast_from_file(fs_path)
 
     @property
+    def change(self):
+        return SourceChangeGenerator(self)
+
+    @property
     def children(self):
         #all of the children found by astroid:
 
@@ -359,12 +366,17 @@ class ModuleNode(Node):
 
 
 class ClassNode(Node):
+
     def __init__(self, parent, name, astroid_object):
         super(ClassNode, self).__init__()
 
         self.parent = parent
         self.name = name
         self._astroid_object = astroid_object
+
+    @property
+    def change(self):
+        return SourceChangeGenerator(self)
 
     @property
     def children(self):
@@ -561,6 +573,10 @@ class FunctionNode(Node):
         self.parent = parent
         self.name = name
         self._astroid_object = astroid_object
+
+    @property
+    def change(self):
+        return SourceChangeGenerator(self)
 
     @property
     def fs_path(self):

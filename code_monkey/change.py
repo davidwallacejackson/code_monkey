@@ -140,6 +140,42 @@ class ChangeGenerator(object):
             character_index_of_line, inject_source)
 
 
+class SourceChangeGenerator(ChangeGenerator):
+    '''ChangeGenerator for Nodes that encompass a body of full Python source
+    code -- i.e., modules, classes, and functions. Generated variables get one
+    newline before. If you want to pass in raw source (instead of a value to be
+    converted into source by a formatter), use convert_value=False.
+
+    If extra_trailing_newline==True, one additional newline will be added after
+    the variable declaration, so that there's a full blank line between it and
+    the next line of source code. 
+
+    line_index is relative to the node body. If line_index is not provided, the
+    variable will be inserted at node.body_start_line.'''
+
+    def inject_assignment(self,
+            indentation,
+            name,
+            value,
+            extra_trailing_newline=False,
+            convert_value=True,
+            line_index=0):
+
+        if convert_value:
+            value = format_source(
+                value,
+                starting_indentation=indentation)
+
+        generated_source = '\n' + indentation + name + ' = ' + value + '\n'
+
+        if extra_trailing_newline:
+            generated_source += '\n'
+
+        return self.inject_at_body_line(
+            line_index,
+            generated_source)
+
+
 class VariableChangeGenerator(ChangeGenerator):
 
     def value(self, value):

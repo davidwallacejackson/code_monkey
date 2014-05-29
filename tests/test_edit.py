@@ -54,12 +54,14 @@ EXPECTED_DIFF_STACKED = '''Changes:
  
      def __init__(self, first_name, last_name):
          self.first_name = first_name
-@@ -14,6 +16,8 @@
+@@ -14,6 +16,10 @@
  
  class CodeMonkey(Employee):
      """He writes code."""
 +
-+    SECOND_INJECTED_VALUE = [\'bar\']
++    SECOND_INJECTED_VALUE = [
++        'bar',
++    ]
      def __init__(self, *args, **kwargs):
          super(CodeMonkey, self).__init__(*args, **kwargs)
          self.is_up = False
@@ -127,17 +129,23 @@ def test_stacked_edits_to_file():
     employee_class = employee_module.children['Employee']
     code_monkey_class = employee_module.children['CodeMonkey']
 
-    employee_inject_source = "\n    FIRST_INJECTED_VALUE = 'foo'\n"
-    code_monkey_inject_source = "\n    SECOND_INJECTED_VALUE = ['bar']\n"
+    #we'll do the Employee with an inject_at_line directly, and CodeMonkey with
+    #an inject_assignment, to get broader coverage
 
-    changeset = ChangeSet()
+    employee_inject_source = "\n    FIRST_INJECTED_VALUE = 'foo'\n"
+
     change = employee_class.change.inject_at_line(
         1,
         employee_inject_source)
-    second_change = code_monkey_class.change.inject_at_line(
-        2,
-        code_monkey_inject_source)
 
+    code_monkey_inject_source = "\n    SECOND_INJECTED_VALUE = ['bar']\n"
+    second_change = code_monkey_class.change.inject_assignment(
+        '    ',
+        'SECOND_INJECTED_VALUE',
+        ['bar'],
+        line_index=1)
+
+    changeset = ChangeSet()
     changeset.add_changes([change, second_change])
 
     #check that diffs work as expected
