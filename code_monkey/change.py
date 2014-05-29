@@ -127,9 +127,9 @@ class ChangeGenerator(object):
 
         return self.inject_at_index(character_index_of_line, inject_source)
 
-    def inject_at_body_index(self, line_index, inject_source):
-        '''As inject_at_index, but takes a line index instead of a character
-        index.'''
+    def inject_at_body_line(self, line_index, inject_source):
+        '''As inject_at_body_index, but takes a line index instead of a
+        character index.'''
 
         character_index_of_line = line_column_to_absolute_index(
             self.node.get_body_source(),
