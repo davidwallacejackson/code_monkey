@@ -9,13 +9,13 @@ TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
     '../test_project')
 
-EXPECTED_STR = '''--- /Users/djackson/git/code_monkey/tests/../test_project/settings.py
-+++ /Users/djackson/git/code_monkey/tests/../test_project/settings.py
+EXPECTED_STR = '''--- {0}
++++ {0}
 @@ -1,3 +1,4 @@
 +foobar
  ONE_LINER = 'foobar'
  
- MULTILINE_SETTING = {
+ MULTILINE_SETTING = {{
 '''
 
 def test_str():
@@ -25,7 +25,8 @@ def test_str():
         0,
         'foobar\n')
 
-    assert_equal(str(change), EXPECTED_STR)
+    expected = EXPECTED_STR.format(path.join(TEST_PROJECT_PATH, 'settings.py'))
+    assert_equal(str(change), expected)
 
 
 def test_change_value():
