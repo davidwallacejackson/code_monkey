@@ -68,7 +68,7 @@ def test_node_tree():
     '''Test that nodes are correctly created from source'''
     project = ProjectNode(TEST_PROJECT_PATH)
 
-    assert_equal(len(project.children), 2)
+    assert_equal(len(project.children), 3)
 
     package = project.children['lib']
     root_module = project.children['settings']

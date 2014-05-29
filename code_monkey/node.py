@@ -5,6 +5,7 @@ import pkgutil
 from astroid.manager import AstroidManager
 from astroid.node_classes import Assign, AssName
 from astroid.scoped_nodes import Class, Function
+from logilab.common.modutils import modpath_from_file
 
 from code_monkey.change import ChangeGenerator, VariableChangeGenerator
 from code_monkey.utils import (
@@ -13,7 +14,7 @@ from code_monkey.utils import (
 
 def get_modules(fs_path):
     '''Find all Python modules in fs_path. Returns a list of tuples of the form:
-    (module_name, is_package)'''
+    (full_path, is_package)'''
 
     modules = []
 
@@ -23,31 +24,19 @@ def get_modules(fs_path):
 
         if os.path.isdir(full_path) and '__init__.py' in os.listdir(full_path):
             #directories with an __init__.py file are Python packages
-            modules.append((filename, True))
-        elif filename.endswith('.py') and not filename == '__init__.py':
-            #TODO: figure out how to handle source in init files, since astroid
-            #doesn't acknowledge them
+            modules.append((full_path, True))
 
-            #strip the extension
-            module_name = os.path.splitext(filename)[0]
-
+        elif filename.endswith('.py'):
             #files ending in .py are assumed to be Python modules
-            modules.append((module_name, False))
+            modules.append((full_path, False))
 
     return modules
-
-
-def make_astroid_project(project_path):
-    project_files = []
-
-    return AstroidManager().project_from_files([project_path])
 
 
 class Node(object):
 
     def __init__(self):
         self.parent = None
-        self.path = None
 
     @property
     def change(self):
@@ -56,16 +45,6 @@ class Node(object):
     @property
     def children(self):
         return {}
-
-    @property
-    def name(self):
-        '''the name is the last component of the path'''
-        if not self.path:
-            return '[root]'
-
-        path_components = self.path.split('.')
-        return path_components[
-            len(path_components) - 1]
 
     @property
     def root(self):
@@ -206,6 +185,10 @@ class Node(object):
             self.body_end_index)
 
 
+    @property
+    def path(self):
+        return self.parent.path + '.' + self.name
+
     def __unicode__(self):
         return '{}: {}'.format(
             str(self.__class__.__name__),
@@ -224,16 +207,12 @@ class ProjectNode(Node):
     def __init__(self, project_path):
         super(ProjectNode, self).__init__()
 
-        #remove trailing slash if present, for consistency
-        #this is important when we use .split('/') to find the name of the
-        #project directory
-        if project_path.endswith('/'):
-            project_path = project_path[:-1]
+        #gets the python 'dotpath' of the project root. If the project root
+        #itself is in the Python path, this will be an empty string
+        self.name = '.'.join(modpath_from_file(project_path))
 
-        self._astroid_project = make_astroid_project(project_path)
         self.parent = None
         self.scope = None
-        self.path = ''
 
         #the file system (not python) path to the project
         self._fs_path = project_path
@@ -243,24 +222,27 @@ class ProjectNode(Node):
         '''astroid doesn't expose the children of packages in a convenient way,
         so we the filesystem to list them and build child nodes'''
 
-        #NOTE: pkgutil.iter_modules should do this, but for some reason it is
-        #occasionally iterating down and grabbing modules that aren't on the
-        #surface. Would be worth finding out why.
-        child_names = get_modules(self.fs_path)
+        fs_children = get_modules(self.fs_path)
 
         children = {}
 
-        for name, is_package in child_names:
+        for fs_path, is_package in fs_children:
             if is_package:
-                children[name] = PackageNode(
+                child = PackageNode(
                     parent=self,
-                    path=name)
+                    fs_path=fs_path)
+                children[child.name] = child
             else:
-                children[name] = ModuleNode(
+                child = ModuleNode(
                     parent=self,
-                    path=name)
+                    fs_path=fs_path)
+                children[child.name] = child
 
         return children
+
+    @property
+    def path(self):
+        return self.name
 
     def __str__(self):
         return self.__unicode__()
@@ -273,75 +255,53 @@ class ProjectNode(Node):
 
 class PackageNode(Node):
     
-    def __init__(self, parent, path):
+    def __init__(self, parent, fs_path):
         super(PackageNode, self).__init__()
 
         self.parent = parent
-        self.path = path
+        self._fs_path = fs_path
 
-        self._fs_path = os.path.join(
-            self.root.fs_path,
-            self.path.replace('.', '/'))
+        #gets the module name -- the whole return value of modpath_from_file
+        #is a list containing each element of the dotpath
+        self.name = modpath_from_file(fs_path)[-1]
 
     @property
     def children(self):
         '''astroid doesn't expose the children of packages in a convenient way,
         so we use pkgutil to access them and build child nodes'''
 
-        child_names = get_modules(self.fs_path)
+        fs_children = get_modules(self.fs_path)
+
         children = {}
 
-        for name, is_package in child_names:
+        for fs_path, is_package in fs_children:
             if is_package:
-                children[name] = PackageNode(
+                child = PackageNode(
                     parent=self,
-                    path=self.path + '.' + name)
+                    fs_path=fs_path)
+                children[child.name] = child
             else:
-                children[name] = ModuleNode(
+                child = ModuleNode(
                     parent=self,
-                    path=self.path + '.' + name)
+                    fs_path=fs_path)
+                children[child.name] = child
 
         return children
 
 
 class ModuleNode(Node):
 
-    def __init__(self, parent, path):
+    def __init__(self, parent, fs_path):
         super(ModuleNode, self).__init__()
 
         self.parent = parent
-        self.path = path
+        self._fs_path = fs_path
 
-        #TODO: below is a hacky way of getting the name of the folder that the
-        #whole project is in (and it's broken under Windows). come up with
-        #something more robust!
-        root_fs_path = self.root.fs_path
+        #gets the module name -- the whole return value of modpath_from_file
+        #is a list containing each element of the dotpath
+        self.name = modpath_from_file(fs_path)[-1]
 
-        if '__init__.py' in os.listdir(root_fs_path):
-            #if root has an __init__, it's a package, and we need to add its
-            #name to the path
-            root_package_name = self.root.fs_path.split('/')[-1] + '.'
-        else:
-            root_package_name = ''
-
-        self._fs_path = os.path.join(
-            self.root.fs_path,
-            self.path.replace('.', '/')) + '.py'
-
-        try:
-            self._astroid_object = self.root._astroid_project.get_module(
-                root_package_name + self.path)
-        except KeyError:
-            #if the project root is not in the current Python path, astroid
-            #uses filenames to identify modules. And depending on what exactly
-            #is in the path, the project folder's name may or may not be
-            #appended
-
-            #TODO: find a way to force consistent behavior in astroid. ideally,
-            #we want it to always behave like the project under inspection is in
-            #the Python path
-            self._astroid_object = self.root._astroid_project.get_module(
-                self.fs_path)
+        self._astroid_object = AstroidManager().ast_from_file(fs_path)
 
     @property
     def children(self):
@@ -356,14 +316,14 @@ class ModuleNode(Node):
 
                 children[child.name] = ClassNode(
                     parent=self,
-                    path=self.path + '.' + child.name,
+                    name=child.name,
                     astroid_object=child)
 
             elif isinstance(child, Function):
 
                 children[child.name] = FunctionNode(
                     parent=self,
-                    path=self.path + '.' + child.name,
+                    name=child.name,
                     astroid_object=child)
 
             elif isinstance(child, Assign):
@@ -393,11 +353,11 @@ class ModuleNode(Node):
 
 
 class ClassNode(Node):
-    def __init__(self, parent, path, astroid_object):
+    def __init__(self, parent, name, astroid_object):
         super(ClassNode, self).__init__()
 
         self.parent = parent
-        self.path = path
+        self.name = name
         self._astroid_object = astroid_object
 
     @property
@@ -413,14 +373,14 @@ class ClassNode(Node):
 
                 children[child.name] = ClassNode(
                     parent=self,
-                    path=self.path + '.' + child.name,
+                    name=child.name,
                     astroid_object=child)
 
             elif isinstance(child, Function):
 
                 children[child.name] = FunctionNode(
                     parent=self,
-                    path=self.path + '.' + child.name,
+                    name=child.name,
                     astroid_object=child)
 
             elif isinstance(child, Assign):
@@ -435,6 +395,7 @@ class ClassNode(Node):
                 children[child_node.name] = child_node
 
         return children
+
     @property
     def fs_path(self):
         #TODO: doesn't work for nested classes
@@ -466,14 +427,14 @@ class VariableNode(Node):
         self._astroid_value = self._astroid_object.value
 
         try:
-            self.path = self.parent.path + '.' + self._astroid_name.name
+            self.name = self._astroid_name.name
         except AttributeError:
             #'subscript' assignments (a[b] = ...) don't have a name in astroid.
             #instead, we give them one by reading their source
 
             #TODO: this can result in names containing dots, which is invalid.
             #need a better solution
-            self.path = self.parent.path + '.' + self._astroid_name.as_string()
+            self.path = self._astroid_name.as_string()
 
     def eval_body(self):
         '''Attempt to evaluate the body (i.e., the value) of this VariableNode
@@ -590,11 +551,11 @@ class VariableNode(Node):
 
 
 class FunctionNode(Node):
-    def __init__(self, parent, path, astroid_object):
+    def __init__(self, parent, name, astroid_object):
         super(FunctionNode, self).__init__()
 
         self.parent = parent
-        self.path = path
+        self.name = name
         self._astroid_object = astroid_object
 
     @property
