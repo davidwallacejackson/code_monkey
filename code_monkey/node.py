@@ -94,19 +94,44 @@ class Node(object):
             #if the path is to a directory, we'll get an IOError
             return None
 
+
     @property
     def start_line(self):
         #astroid gives line numbers starting with 1
         return self._astroid_object.fromlineno - 1
 
     @property
+    def body_start_line(self):
+        return self.start_line
+
+
+    @property
     def end_line(self):
         #astroid gives line numbers starting with 1
-        return self._astroid_object.tolineno - 1
+        return self._astroid_object.tolineno
+
+    @property
+    def body_end_line(self):
+        return self.end_line
+
 
     @property
     def start_column(self):
         return self._astroid_object.col_offset
+
+    @property
+    def body_start_column(self):
+        return self.start_column
+
+
+    @property
+    def end_column(self):
+        return 0
+
+    @property
+    def body_end_column(self):
+        return self.body_end_column
+
 
     @property
     def start_index(self):
@@ -123,8 +148,8 @@ class Node(object):
         relative to the entire source file.'''
         return line_column_to_absolute_index(
             self.get_file_source_code(),
-            self.end_line + 1,
-            0)
+            self.end_line,
+            self.end_column)
 
     @property
     def body_start_index(self):
@@ -141,7 +166,7 @@ class Node(object):
         relative to the entire source file.'''
         return line_column_to_absolute_index(
             self.get_file_source_code(),
-            self.body_end_line + 1,
+            self.body_end_line,
             0)
  
     def _get_source_region(self, start_index, end_index):
@@ -368,19 +393,7 @@ class ModuleNode(Node):
         #conventions, it should be 0
         return 0
 
-    @property
-    def body_start_line(self):
-        return self.start_line
 
-    @property
-    def body_start_column(self):
-        return self.start_column
-
-    @property
-    def body_end_line(self):
-        return self.end_line
-
- 
 class ClassNode(Node):
     def __init__(self, parent, path, astroid_object):
         super(ClassNode, self).__init__()
@@ -426,6 +439,7 @@ class ClassNode(Node):
         return children
     @property
     def fs_path(self):
+        #TODO: doesn't work for nested classes
         return self.parent.fs_path
 
     @property
@@ -435,11 +449,7 @@ class ClassNode(Node):
 
     @property
     def body_start_column(self):
-        return self.start_column
-
-    @property
-    def body_end_line(self):
-        return self.end_line
+        return 0
 
 
 class VariableNode(Node):
@@ -479,6 +489,7 @@ class VariableNode(Node):
 
     @property
     def fs_path(self):
+        #TODO: doesn't work for nested variables
         return self.parent.fs_path
 
     @property
@@ -567,7 +578,7 @@ class VariableNode(Node):
             self._astroid_value.tolineno - 1,
             unclosed_dict)
 
-        return end_line
+        return (end_line + 1)
 
 
 class FunctionNode(Node):
@@ -580,6 +591,7 @@ class FunctionNode(Node):
 
     @property
     def fs_path(self):
+        #TODO: doesn't work for nested functions/methods
         return self.parent.fs_path
 
     @property
@@ -589,8 +601,4 @@ class FunctionNode(Node):
 
     @property
     def body_start_column(self):
-        return self.start_column
-
-    @property
-    def body_end_line(self):
-        return self.end_line
+        return 0
