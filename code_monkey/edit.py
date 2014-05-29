@@ -48,7 +48,7 @@ class ChangeSet(object):
                     #changes in the same file are not allowed to touch the
                     #same lines
                     raise OverlapEditException(
-                        path,
+                        change.path,
                         (old_change, change))
 
             self.changes[change.path].append(change)

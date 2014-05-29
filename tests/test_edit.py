@@ -2,10 +2,16 @@
 from os import path
 from shutil import copytree, rmtree
 
-from nose.tools import assert_equal, assert_is_instance, with_setup
+from nose.tools import (
+    assert_equal,
+    assert_is_instance,
+    assert_raises,
+    with_setup)
 
+from code_monkey.change import Change
 from code_monkey.node import ProjectNode
 from code_monkey.edit import ChangeSet
+from code_monkey.utils import OverlapEditException
 
 TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
@@ -150,3 +156,27 @@ def test_stacked_edits_to_file():
 
             assert_equal(modified_source, expected_source)
 
+
+def test_conflicting_changes():
+    '''Test that ChangeSet raises an exception if we give it two overlapping
+    changes.
+
+    Does not write any changes to filesystem, so it doesn't need a fresh copy of
+    the test project.'''
+
+    settings_path = path.join(TEST_PROJECT_PATH, 'settings.py')
+
+    change = Change(
+        settings_path,
+        0,
+        10,
+        'some_newtext')
+
+    second_change = Change(
+        settings_path,
+        5,
+        15,
+        'more_newtext')
+
+    with assert_raises(OverlapEditException):
+            changeset = ChangeSet([change, second_change])
