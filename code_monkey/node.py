@@ -505,10 +505,6 @@ class VariableNode(Node):
     def start_column(self):
         return self._astroid_name.col_offset
 
-    @property
-    def end_line(self):
-        return self.body_end_line
-
     #in a VariableNode, the _astroid_value represents the body
     @property
     def body_start_line(self):
@@ -519,7 +515,7 @@ class VariableNode(Node):
         return self._astroid_value.col_offset
 
     @property
-    def body_end_line(self):
+    def end_line(self):
         #there's a bug in astroid where it doesn't correctly detect the last
         #line of multiline enclosed blocks (parens, brackets, etc.) -- it gives
         #the last line with content, rather than the line containing the
