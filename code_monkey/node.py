@@ -8,10 +8,8 @@ from astroid.scoped_nodes import Class, Function
 
 from code_monkey.change import ChangeGenerator, VariableChangeGenerator
 from code_monkey.utils import (
-    count_unterminated_in_source,
-    find_termination,
-    line_column_to_absolute_index,
-    string_to_lines)
+    absolute_index_to_line_column,
+    line_column_to_absolute_index)
 
 def get_modules(fs_path):
     '''Find all Python modules in fs_path. Returns a list of tuples of the form:
@@ -515,66 +513,72 @@ class VariableNode(Node):
         return self._astroid_value.col_offset
 
     @property
-    def end_line(self):
+    def end_index(self):
         #there's a bug in astroid where it doesn't correctly detect the last
         #line of multiline enclosed blocks (parens, brackets, etc.) -- it gives
         #the last line with content, rather than the line containing the
         #terminating character
 
         #we have to work around this by scanning through the source ourselves to
-        #find the terminating point -- see utils.find_termination
+        #find the terminating point
 
-        #should probably submit a bug report for astroid, too
+        #astroid bug report submitted:
+        #https://bitbucket.org/logilab/astroid/issue/31/astroid-sometimes-reports-the-wrong
 
-        astroid_end_index = line_column_to_absolute_index(
-            self.get_file_source_code(),
-            self._astroid_value.tolineno,
-            0)
+        file_source_lines = self.get_file_source_code().splitlines(True)
 
-        source_via_astroid = self._get_source_region(
-            self.body_start_index,
-            astroid_end_index)
+        #we start by finding the line/column at which the next 'sibling' of
+        #this node begins. if the node is at the end of the file, we get the
+        #end of the file instead
+        next_sibling = self._astroid_object.next_sibling()
+        astroid_end_line = self._astroid_value.tolineno - 1
+        if next_sibling:
+            next_sibling_line = next_sibling.fromlineno
+            next_sibling_column = next_sibling.col_offset
+            lines_to_scan = file_source_lines[
+                astroid_end_line:(next_sibling_line+1)]
 
-        unclosed_dict = {}
-
-        parens_count = count_unterminated_in_source(
-            source_via_astroid, '(', ')')
-        if parens_count > 0:
-            unclosed_dict[')'] = parens_count 
-
-        square_count = count_unterminated_in_source(
-            source_via_astroid, '[', ']')
-        if square_count > 0:
-            unclosed_dict[']'] = square_count
-
-        curly_count = count_unterminated_in_source(
-            source_via_astroid, '{', '}')
-        if curly_count > 0:
-            unclosed_dict['}'] = curly_count
-
-        if len(unclosed_dict.items()) > 0:
-            unclosed_count = reduce(lambda x, y: x+y, unclosed_dict.values())
+            #trim the last line so that we don't include any of the sibling
+            lines_to_scan[-1] = lines_to_scan[-1][0:next_sibling_column]
         else:
-            unclosed_count = 0
+            #if there is no sibling, we just start from the end of the file
+            lines_to_scan = file_source_lines[
+                self._astroid_value.tolineno:len(file_source_lines)]
 
-        if unclosed_count == 0:
-            #if there are no unclosed blocks, then astroid found the right end
-            #line, and we can just return it
-            return self._astroid_value.tolineno - 1
+        #this string doesn't have the right formatting, but it should be
+        #otherwise correct -- so we can use it to see what character our
+        #variable ends on
+        terminating_char = self._astroid_value.as_string()[-1]
 
-        #otherwise, we have to dig through the source looking for the end
-        #ourselves
-        with open(self.fs_path, 'r') as source_file:
-            full_source = source_file.read()
+        #scan through the lines in reverse order, looking for the end of the
+        #node
+        for line_index, line in enumerate(reversed(lines_to_scan)):
+            #remove comments from line
+            if '#' in line:
+                line = line[0:line.find('#')]
 
-            source_lines = string_to_lines(full_source)
+            for char_index, char in enumerate(line):
+                if char == terminating_char:
+                    line_index_in_file = astroid_end_line + (
+                        len(lines_to_scan)-line_index)
+                    return line_column_to_absolute_index(
+                        self.get_file_source_code(),
+                        line_index_in_file,
+                        char_index)
 
-        end_line = find_termination(
-            source_lines,
-            self._astroid_value.tolineno - 1,
-            unclosed_dict)
+    #for variable nodes, it's easiest to find an absolute end index first, then
+    #work backwards to get line and column numbers
+    @property
+    def end_line(self):
+        return absolute_index_to_line_column(
+            self.get_file_source_code(),
+            self.end_index)[0]
 
-        return (end_line + 1)
+    @property
+    def end_column(self):
+        return absolute_index_to_line_column(
+            self.get_file_source_code(),
+            self.end_index)[1]
 
 
 class FunctionNode(Node):
