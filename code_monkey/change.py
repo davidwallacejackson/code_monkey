@@ -7,7 +7,7 @@ do not conflict, provide diffs, and commit changes to disk.
 '''
 import difflib
 
-from code_monkey.format import format_source
+from code_monkey.format import format_value
 from code_monkey.utils import line_column_to_absolute_index
 
 class Change(object):
@@ -162,7 +162,7 @@ class SourceChangeGenerator(ChangeGenerator):
             line_index=0):
 
         if convert_value:
-            value = format_source(
+            value = format_value(
                 value,
                 starting_indentation=indentation)
 
@@ -187,4 +187,4 @@ class VariableChangeGenerator(ChangeGenerator):
         To put it another way, .value() takes in a value, converts it to Python
         source, and then overwrites the variable body with that source.'''
 
-        return self.overwrite_body(format_source(value))
+        return self.overwrite_body(format_value(value))

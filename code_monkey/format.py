@@ -4,7 +4,7 @@
 INDENTATION_LEVEL = '    '
 
 
-def format_source(format_me, starting_indentation='', indent_first_line=False):
+def format_value(format_me, starting_indentation='', indent_first_line=False):
     '''Turn format_me into a string suitable for insertion into a source file.
     format_me can be a string, number, boolean, list, tuple, or dictionary.'''
 
@@ -64,7 +64,7 @@ def format_list(format_me, starting_indentation='', indent_first_line=False):
         else:
             output += ',\n'
 
-        output +=  format_source(
+        output +=  format_value(
             element,
             starting_indentation=scope_indentation,
             indent_first_line=True)
@@ -94,7 +94,7 @@ def format_tuple(format_me, starting_indentation='', indent_first_line=False):
         else:
             output += ',\n'
 
-        output +=  format_source(
+        output +=  format_value(
             element,
             starting_indentation=scope_indentation,
             indent_first_line=True)
@@ -124,12 +124,12 @@ def format_dict(format_me, starting_indentation='', indent_first_line=False):
         else:
             output += ',\n'
 
-        output +=  format_source(
+        output +=  format_value(
             key,
             starting_indentation=scope_indentation,
             indent_first_line=True)
         output += ': '
-        output += format_source(
+        output += format_value(
             value,
             starting_indentation=scope_indentation,
             indent_first_line=False)
