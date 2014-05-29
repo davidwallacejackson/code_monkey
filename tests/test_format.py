@@ -11,25 +11,25 @@ from code_monkey.format import (
 EXPECTED_LIST = '''[
     3,
     4,
-    5,
+    5
 ]'''
 
 EXPECTED_TUPLE = '''(
     'foo/bar/baz.quux',
-    True,
+    True
 )'''
 
 EXPECTED_DICT = '''{
     'a': 42,
-    'b': False,
+    'b': False
 }'''
 
 EXPECTED_NESTED = '''(
     True,
     (
         3,
-        4,
-    ),
+        4
+    )
 )'''
 
 def test_literal():

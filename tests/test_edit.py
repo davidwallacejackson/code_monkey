@@ -60,7 +60,7 @@ EXPECTED_DIFF_STACKED = '''Changes:
      """He writes code."""
 +
 +    SECOND_INJECTED_VALUE = [
-+        'bar',
++        'bar'
 +    ]
      def __init__(self, *args, **kwargs):
          super(CodeMonkey, self).__init__(*args, **kwargs)

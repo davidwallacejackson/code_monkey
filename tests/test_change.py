@@ -41,4 +41,4 @@ def test_change_value():
     assert_equal(change.new_text, '42')
 
     change = setting_node.change.value([42])
-    assert_equal(change.new_text, '[\n    42,\n]')
+    assert_equal(change.new_text, '[\n    42\n]')

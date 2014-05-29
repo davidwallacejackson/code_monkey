@@ -54,16 +54,22 @@ def format_list(format_me, starting_indentation='', indent_first_line=False):
 
     scope_indentation = starting_indentation + INDENTATION_LEVEL
 
+    first = True
+
     #each element gets its own line
     for element in format_me:
+
+        if first:
+            first = False
+        else:
+            output += ',\n'
+
         output +=  format_source(
             element,
             starting_indentation=scope_indentation,
             indent_first_line=True)
-        output += ',\n'
 
-
-    output += starting_indentation + ']'
+    output += '\n' + starting_indentation + ']'
 
     return output
 
@@ -78,16 +84,22 @@ def format_tuple(format_me, starting_indentation='', indent_first_line=False):
 
     scope_indentation = starting_indentation + INDENTATION_LEVEL
 
+    first = True
+
     #each element gets its own line
     for element in format_me:
+
+        if first:
+            first = False
+        else:
+            output += ',\n'
+
         output +=  format_source(
             element,
             starting_indentation=scope_indentation,
             indent_first_line=True)
-        output += ',\n'
 
-
-    output += starting_indentation + ')'
+    output += '\n' + starting_indentation + ')'
 
     return output
 
@@ -102,8 +114,16 @@ def format_dict(format_me, starting_indentation='', indent_first_line=False):
 
     scope_indentation = starting_indentation + INDENTATION_LEVEL
 
+    first = True
+
     #each element gets its own line
     for key, value in format_me.items():
+
+        if first:
+            first = False
+        else:
+            output += ',\n'
+
         output +=  format_source(
             key,
             starting_indentation=scope_indentation,
@@ -113,9 +133,7 @@ def format_dict(format_me, starting_indentation='', indent_first_line=False):
             value,
             starting_indentation=scope_indentation,
             indent_first_line=False)
-        output += ',\n'
 
-
-    output += starting_indentation + '}'
+    output += '\n' + starting_indentation + '}'
 
     return output
