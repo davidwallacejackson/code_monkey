@@ -187,7 +187,13 @@ class Node(object):
 
     @property
     def path(self):
-        return self.parent.path + '.' + self.name
+        parent_path = self.parent.path
+
+        #prevents an 'empty' root from giving us paths like '.foo.bar.baz'
+        if parent_path == '':
+            return self.name
+
+        return parent_path + '.' + self.name
 
     def __unicode__(self):
         return '{}: {}'.format(
@@ -398,7 +404,6 @@ class ClassNode(Node):
 
     @property
     def fs_path(self):
-        #TODO: doesn't work for nested classes
         return self.parent.fs_path
 
     @property
@@ -434,7 +439,7 @@ class VariableNode(Node):
 
             #TODO: this can result in names containing dots, which is invalid.
             #need a better solution
-            self.path = self._astroid_name.as_string()
+            self.name = self._astroid_name.as_string()
 
     def eval_body(self):
         '''Attempt to evaluate the body (i.e., the value) of this VariableNode
@@ -448,7 +453,6 @@ class VariableNode(Node):
 
     @property
     def fs_path(self):
-        #TODO: doesn't work for nested variables
         return self.parent.fs_path
 
     @property
@@ -560,7 +564,6 @@ class FunctionNode(Node):
 
     @property
     def fs_path(self):
-        #TODO: doesn't work for nested functions/methods
         return self.parent.fs_path
 
     @property

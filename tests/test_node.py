@@ -85,6 +85,8 @@ def test_node_tree():
     assert_is_instance(module_var, VariableNode)
     assert_is_instance(class_node, ClassNode)
 
+    assert_equal(class_node.path, 'test_project.lib.employee.Employee')
+
     assert_equal(class_node.get_source(), TEST_CLASS_SOURCE)
     assert_equal(class_node.get_body_source(), CLASS_BODY_SOURCE)
 
