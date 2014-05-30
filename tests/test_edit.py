@@ -149,6 +149,11 @@ def test_stacked_edits_to_file():
     expected = EXPECTED_DIFF_STACKED.format(employee_module.fs_path)
     assert_equal(changeset.diff(), expected)
 
+    #check that diff output works as expected:
+    changeset.diff_to_file(path.join(COPY_PATH, 'diff'))
+    with open(path.join(COPY_PATH, 'diff')) as diff_file:
+        assert_equal(diff_file.read(), expected)
+
     changeset.commit()
 
     expected_file_path = path.join(RESOURCES_PATH, 'stacked_edit_expected')

@@ -114,6 +114,12 @@ class ChangeSet(object):
 
         return output
 
+    def diff_to_file(self, file_path):
+        '''Write self.diff to file_path. Any file at file_path will be
+        erased'''
+        with open(file_path, 'w') as outfile:
+            outfile.write(self.diff())
+
     def commit(self):
         '''Write these changes to the filesystem.'''
 
