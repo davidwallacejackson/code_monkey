@@ -1,5 +1,5 @@
 '''Utility functions used by other modules.'''
-
+import os
 
 class InvalidEditException(Exception):
     pass
@@ -13,6 +13,27 @@ class OverlapEditException(InvalidEditException):
         error_message += str(conflicting_changes[1])
 
         super(InvalidEditException, self).__init__(error_message)
+
+
+def get_modules(fs_path):
+    '''Find all Python modules in fs_path. Returns a list of tuples of the form:
+    (full_path, is_package)'''
+
+    modules = []
+
+    for filename in os.listdir(fs_path):
+
+        full_path = os.path.join(fs_path, filename)
+
+        if os.path.isdir(full_path) and '__init__.py' in os.listdir(full_path):
+            #directories with an __init__.py file are Python packages
+            modules.append((full_path, True))
+
+        elif filename.endswith('.py'):
+            #files ending in .py are assumed to be Python modules
+            modules.append((full_path, False))
+
+    return modules
 
 
 def findnth(haystack, needle, n):
