@@ -2,7 +2,10 @@ from astroid.node_classes import Arguments
 
 from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
-from code_monkey.utils import absolute_index_to_line_column, find_termination
+from code_monkey.utils import (
+    absolute_index_to_line_column,
+    find_termination,
+    safe_docstring)
 
 class FunctionNode(Node):
     '''Class representing a Python function or method, at the module or class
@@ -31,10 +34,19 @@ class FunctionNode(Node):
 
     @property
     def body_start_index(self):
-        #TODO: ignore text in docstrings
         file_source = self.get_file_source_code()
         first_child = self._astroid_child_after_signature
-        colon_index = find_termination(
+
+        #see the safe_docstring function for details on why we do this
+        docstring = self._astroid_object.doc
+        if docstring and ':' in docstring:
+            file_source = file_source.replace(
+                docstring,
+                safe_docstring(docstring))
+
+        
+        #first character AFTER the colon at the end of the signature
+        after_colon_index = find_termination(
             file_source.splitlines(True),
             first_child.fromlineno - 1,
             first_child.col_offset,
@@ -43,9 +55,9 @@ class FunctionNode(Node):
         #now that we've found the colon where the function signature ends,
         #search FORWARDS for the next newline. one after that is our start
         #index
-        for newline_index, char in enumerate(file_source[colon_index:]):
+        for newline_index, char in enumerate(file_source[after_colon_index:]):
             if char == '\n':
-                return colon_index + newline_index + 1
+                return after_colon_index + newline_index + 1
 
     @property
     def body_start_line(self):

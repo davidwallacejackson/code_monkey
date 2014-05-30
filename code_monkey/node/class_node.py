@@ -8,7 +8,10 @@ from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.node.function import FunctionNode
 from code_monkey.node.variable import VariableNode
-from code_monkey.utils import absolute_index_to_line_column, find_termination
+from code_monkey.utils import (
+    absolute_index_to_line_column,
+    find_termination,
+    safe_docstring)
 
 
 class ClassNode(Node):
@@ -74,9 +77,16 @@ class ClassNode(Node):
 
     @property
     def body_start_index(self):
-        #TODO: ignore text in docstrings
         file_source = self.get_file_source_code()
         first_child = self._astroid_child_after_signature
+
+        #see the safe_docstring function for details on why we do this
+        docstring = self._astroid_object.doc
+        if docstring and ':' in docstring:
+            file_source = file_source.replace(
+                docstring,
+                safe_docstring(docstring))
+
         
         #first character AFTER the colon at the end of the signature
         after_colon_index = find_termination(
@@ -121,4 +131,3 @@ class ClassNode(Node):
         #indentation), so instead, we use the line of the first child
         first_child = self._astroid_child_after_signature
         return lines[first_child.fromlineno][0:first_child.col_offset]
-

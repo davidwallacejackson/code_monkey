@@ -134,3 +134,20 @@ def find_termination(lines, start_line, start_column, terminating_char):
         start_line,
         start_column,
         terminating_char)
+
+def safe_docstring(input):
+    '''Takes a docstring input, and returns a version with all ':' characters
+    replaced with ' '.
+
+    ':' characters will confuse the method we use to scan for the beginning of a
+    class or function body (basically, looking backwards from the first element
+    until we find the ':' from the signature), which is why we do this.
+
+    It's safe to sub in safe_docstring for docstring in a copy of the source,
+    because even if the docstring text appears elsewhere in the file, the
+    scanner won't hit it, and it will take up the same number of characters.
+
+    We could fool this by have a docstring whose text appears at the end of the
+    signature as well. Hopefully, that's a rare case, but: TODO: fix that.'''
+
+    return input.replace(':', ' ')

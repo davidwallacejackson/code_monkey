@@ -104,6 +104,10 @@ def test_source():
     assert_equal(module_var.eval_body(), VARIABLE_VALUE)
 
     #has a multiline signature
+
+    #by placing comments or docstrings in the source and doing a text search for
+    #them, we can make the test more flexible as edge_cases.py changes in the
+    #future
     lair_class = package.children['edge_cases'].children['Lair']
     assert_equal(
         lair_class.body_start_index,
@@ -114,7 +118,7 @@ def test_source():
     assert_equal(
         memo_function.body_start_index,
         memo_function.get_file_source_code().find(
-            '#send_memo body starts here'))
+            "    '''::::send_memo body starts here'''"))
 
 
 def test_indentation():
