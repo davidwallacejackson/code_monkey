@@ -92,7 +92,6 @@ def test_single_edit_to_file():
     nested_module = package.children['employee']
 
     code_monkey_class = nested_module.children['CodeMonkey']
-    source = code_monkey_class.get_source()
 
     inject_source = \
         "\n    def like_tab_and_mountain_dew(self):\n        return True\n"
@@ -138,7 +137,6 @@ def test_stacked_edits_to_file():
         1,
         employee_inject_source)
 
-    code_monkey_inject_source = "\n    SECOND_INJECTED_VALUE = ['bar']\n"
     second_change = code_monkey_class.change.inject_assignment(
         '    ',
         'SECOND_INJECTED_VALUE',
@@ -187,4 +185,4 @@ def test_conflicting_changes():
         'more_newtext')
 
     with assert_raises(OverlapEditException):
-            changeset = ChangeSet([change, second_change])
+        ChangeSet([change, second_change])

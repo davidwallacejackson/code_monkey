@@ -64,9 +64,6 @@ class ChangeGenerator(object):
         '''Generate a change that overwrites the contents of the Node entirely
         with new_source'''
 
-        #find the actual index in the source at which the node begins:
-        file_source = self.node.get_file_source_code()
-
         return Change(
             self.node.fs_path,
             self.node.start_index,
@@ -77,9 +74,6 @@ class ChangeGenerator(object):
         '''Generate a change that overwrites the body of the node with
         new_source. In the case of a ModuleNode, this is equivalent to
         overwrite().'''
-
-        #find the actual index in the source at which the node begins:
-        file_source = self.node.get_file_source_code()
 
         return Change(
             self.node.fs_path,
@@ -142,16 +136,7 @@ class ChangeGenerator(object):
 
 class SourceChangeGenerator(ChangeGenerator):
     '''ChangeGenerator for Nodes that encompass a body of full Python source
-    code -- i.e., modules, classes, and functions. Generated variables get one
-    newline before. If you want to pass in raw source (instead of a value to be
-    converted into source by a formatter), use convert_value=False.
-
-    If extra_trailing_newline==True, one additional newline will be added after
-    the variable declaration, so that there's a full blank line between it and
-    the next line of source code. 
-
-    line_index is relative to the node body. If line_index is not provided, the
-    variable will be inserted at node.body_start_line.'''
+    code -- i.e., modules, classes, and functions.'''
 
     def inject_assignment(self,
             indentation,
@@ -160,7 +145,20 @@ class SourceChangeGenerator(ChangeGenerator):
             extra_trailing_newline=False,
             convert_value=True,
             line_index=0):
+        '''
+        Injects a variable assignment, name = value, at line_index.
 
+        Generated variables get one newline before. If you want to pass in raw
+        source (instead of a value to be converted into source by a formatter),
+        use convert_value=False.
+
+        If extra_trailing_newline==True, one additional newline will be added
+        after the variable declaration, so that there's a full blank line
+        between it and the next line of source code.
+
+        line_index is relative to the node body. If line_index is not provided,
+        the variable will be inserted at node.body_start_line.
+        '''
         if convert_value:
             value = format_value(
                 value,
@@ -177,6 +175,7 @@ class SourceChangeGenerator(ChangeGenerator):
 
 
 class VariableChangeGenerator(ChangeGenerator):
+    '''ChangeGenerator for variable assignment nodes'''
 
     def value(self, value, indentation=''):
         '''Generate a change that changes the value of the variable to value.

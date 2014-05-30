@@ -1,5 +1,3 @@
-from os import path
-
 from code_monkey.node import (
     ProjectNode,
     ClassNode,

@@ -17,9 +17,9 @@ class OverlapEditException(InvalidEditException):
 
 def findnth(haystack, needle, n):
     #snippet from: http://stackoverflow.com/questions/1883980/find-the-nth-occurrence-of-substring-in-a-string
-    parts= haystack.split(needle, n+1)
-    if len(parts)<=n+1:
-        return -1
+    parts = haystack.split(needle, n+1)
+    if len(parts) <= (n + 1):
+        return - 1
     return len(haystack)-len(parts[-1])-len(needle)
 
 

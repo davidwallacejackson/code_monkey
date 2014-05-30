@@ -1,9 +1,8 @@
 from ast import literal_eval
 import os
-import pkgutil
 
 from astroid.manager import AstroidManager
-from astroid.node_classes import Assign, AssName
+from astroid.node_classes import Assign
 from astroid.scoped_nodes import Class, Function
 from logilab.common.modutils import modpath_from_file
 
@@ -263,7 +262,7 @@ class ProjectNode(Node):
 
 
 class PackageNode(Node):
-    
+
     def __init__(self, parent, fs_path):
         super(PackageNode, self).__init__()
 
@@ -324,7 +323,7 @@ class ModuleNode(Node):
         children = {}
 
         for child in astroid_children:
-            
+
             if isinstance(child, Class):
 
                 children[child.name] = ClassNode(

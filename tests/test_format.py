@@ -1,4 +1,4 @@
-from nose.tools import assert_equal, assert_is_instance
+from nose.tools import assert_equal
 
 from code_monkey.format import (
     format_dict,
@@ -39,7 +39,7 @@ def test_literal():
 
 
 def test_list():
-    assert_equal(format_value([3,4,5]), EXPECTED_LIST)
+    assert_equal(format_value([3, 4, 5]), EXPECTED_LIST)
 
 
 def test_tuple():
@@ -51,4 +51,4 @@ def test_dict():
 
 
 def test_nested():
-    assert_equal(format_value((True, (3,4))), EXPECTED_NESTED)
+    assert_equal(format_value((True, (3, 4))), EXPECTED_NESTED)
