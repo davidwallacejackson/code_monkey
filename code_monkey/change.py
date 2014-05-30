@@ -178,7 +178,7 @@ class SourceChangeGenerator(ChangeGenerator):
 
 class VariableChangeGenerator(ChangeGenerator):
 
-    def value(self, value):
+    def value(self, value, indentation=''):
         '''Generate a change that changes the value of the variable to value.
         Value must be an int, string, bool, list, tuple, or dict. Lists, tuples,
         and dicts, must ALSO only contain ints, strings, bools, lists, tuples,
@@ -187,4 +187,7 @@ class VariableChangeGenerator(ChangeGenerator):
         To put it another way, .value() takes in a value, converts it to Python
         source, and then overwrites the variable body with that source.'''
 
-        return self.overwrite_body(format_value(value))
+        return self.overwrite_body(
+            format_value(
+                value,
+                starting_indentation=indentation))
