@@ -33,9 +33,16 @@ class ChangeSet(object):
 
     def __init__(self, changes=[]):
         self.changes = {}
-        self.add_changes(changes)
+        self.add(changes)
 
-    def add_changes(self, changes):
+    def add(self, changes):
+        '''Adds changes to the ChangeSet. If changes is a single change, it will
+        be coerced to a list of one change (so changeset.add(my_change) is a
+        valid use)'''
+
+        if not isinstance(changes, list):
+            changes = [changes]
+
         for change in changes:
             if not change.path in self.changes.keys():
                 self.changes[change.path] = []

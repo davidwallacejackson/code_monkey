@@ -100,7 +100,7 @@ def test_single_edit_to_file():
     change = code_monkey_class.change.inject_at_line(
         6, inject_source)
 
-    changeset.add_changes([change])
+    changeset.add(change)
 
     #check that diffs work as expected
     expected = EXPECTED_DIFF_SINGLE.format(code_monkey_class.fs_path)
@@ -143,7 +143,7 @@ def test_stacked_edits_to_file():
         line_index=1)
 
     changeset = ChangeSet()
-    changeset.add_changes([change, second_change])
+    changeset.add([change, second_change])
 
     #check that diffs work as expected
     expected = EXPECTED_DIFF_STACKED.format(employee_module.fs_path)
