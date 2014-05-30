@@ -19,7 +19,7 @@ your project:
     for node in test_classes:
 
         changeset.add(
-            node.change.inject_at_body_line(1, '    import_var = 42\n')
+            node.change.inject_at_body_line(1, '    import_var = 42\n'))
 
     changeset.commit()
 
@@ -39,6 +39,7 @@ add a new fixture to your test classes, for example:
         fixtures = node.eval_body()
         fixtures.append('new_fixture_name')
         fixtures = sorted(fixtures)
-        node.change.value(fixtures)
+        changeset.add(
+            node.change.value(fixtures))
 
     changeset.commit()
