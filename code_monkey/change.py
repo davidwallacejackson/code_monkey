@@ -139,7 +139,6 @@ class SourceChangeGenerator(ChangeGenerator):
     code -- i.e., modules, classes, and functions.'''
 
     def inject_assignment(self,
-            indentation,
             name,
             value,
             extra_trailing_newline=False,
@@ -159,6 +158,8 @@ class SourceChangeGenerator(ChangeGenerator):
         line_index is relative to the node body. If line_index is not provided,
         the variable will be inserted at node.body_start_line.
         '''
+
+        indentation = self.node.inner_indentation
         if convert_value:
             value = format_value(
                 value,
@@ -177,7 +178,7 @@ class SourceChangeGenerator(ChangeGenerator):
 class VariableChangeGenerator(ChangeGenerator):
     '''ChangeGenerator for variable assignment nodes'''
 
-    def value(self, value, indentation=''):
+    def value(self, value):
         '''Generate a change that changes the value of the variable to value.
         Value must be an int, string, bool, list, tuple, or dict. Lists, tuples,
         and dicts, must ALSO only contain ints, strings, bools, lists, tuples,
@@ -189,4 +190,5 @@ class VariableChangeGenerator(ChangeGenerator):
         return self.overwrite_body(
             format_value(
                 value,
-                starting_indentation=indentation))
+                starting_indentation=self.node.outer_indentation,
+                indent_first_line=False))

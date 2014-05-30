@@ -114,14 +114,6 @@ class ClassNode(Node):
             self.get_file_source_code(),
             self.body_start_index)[1]
 
-
-    @property
-    def outer_indentation(self):
-        '''The indentation level, as a string, at the source where this class
-        begins.'''
-        lines = self.get_file_source_code().splitlines(True)
-        return lines[self.start_line][0:self.start_column]
-
     @property
     def inner_indentation(self):
         '''The indentation level, as a string, of source inside this class.'''

@@ -164,6 +164,15 @@ class Node(object):
 
         return parent_path + '.' + self.name
 
+
+    @property
+    def outer_indentation(self):
+        '''The indentation level, as a string, at the source where this node
+        begins.'''
+        lines = self.get_file_source_code().splitlines(True)
+        return lines[self.start_line][0:self.start_column]
+
+
     def __unicode__(self):
         return '{}: {}'.format(
             str(self.__class__.__name__),

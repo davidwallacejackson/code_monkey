@@ -138,7 +138,6 @@ def test_stacked_edits_to_file():
         employee_inject_source)
 
     second_change = code_monkey_class.change.inject_assignment(
-        code_monkey_class.inner_indentation,
         'SECOND_INJECTED_VALUE',
         ['bar'],
         line_index=1)
