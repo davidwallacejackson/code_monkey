@@ -27,7 +27,7 @@ def test_descent():
     assert_equal(len(q.children()), len(q.matches[0].children))
 
     #the number of nodes in the whole project tree, including the root
-    assert_equal(len(q.flatten()), 18)
+    assert_equal(len(q.flatten()), 21)
 
 
 def test_type_filters():

@@ -138,7 +138,7 @@ def test_stacked_edits_to_file():
         employee_inject_source)
 
     second_change = code_monkey_class.change.inject_assignment(
-        '    ',
+        code_monkey_class.inner_indentation,
         'SECOND_INJECTED_VALUE',
         ['bar'],
         line_index=1)
@@ -153,7 +153,6 @@ def test_stacked_edits_to_file():
     changeset.commit()
 
     expected_file_path = path.join(RESOURCES_PATH, 'stacked_edit_expected')
-
     #check that the edit worked properly
     with open(employee_module.fs_path) as modified_file:
         with open(expected_file_path) as expected_file:
