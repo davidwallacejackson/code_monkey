@@ -15,6 +15,18 @@ class OverlapEditException(InvalidEditException):
         super(InvalidEditException, self).__init__(error_message)
 
 
+class TerminationNotFoundException(Exception):
+    def __init__(self, lines, start_column, start_line, terminating_char):
+        error_message = "terminating character {} was not found\n".format(
+            terminating_char)
+        error_message += "scan started at {}, {} in source: {}".format(
+            start_column,
+            start_line,
+            ''.join(lines))
+
+        super(Exception, self).__init__(error_message)
+
+
 def get_modules(fs_path):
     '''Find all Python modules in fs_path. Returns a list of tuples of the form:
     (full_path, is_package)'''
@@ -73,3 +85,52 @@ def absolute_index_to_line_column(text, index):
     column = len(target_line) - 1
 
     return (line_index, column)
+
+
+def find_termination(lines, start_line, start_column, terminating_char):
+    '''Walk back through lines starting from start_line, start_column, and
+    return the index at which terminating_char first appears, disregarding
+    anything on a line that is part of a comment. Again, the scan is BACKWARDS
+    -- so the result will be before start_line, start_column in the source file.
+
+    Raises an exception if the terminating_char is not found.
+
+    The intended use is to find the end of a construct whose bounds are not
+    necessaily determined by the placement of its children -- anything inside
+    parentheses or brackets, where Python disregards whitespace.'''
+
+    #the last line to scan (remember, backwards!)
+    file_line_limit = 0
+
+    lines_to_scan = lines[file_line_limit:(start_line + 1)]
+
+    #trim the last line so that we don't include any of the sibling
+    lines_to_scan[-1] = lines_to_scan[-1][0:start_column+1]
+
+    #scan through the lines in reverse order, looking for the end of the node
+
+    #len(lines_to_scan) - (line_index + 1) is the index of a line in
+    #lines_to_scan -- basically, it takes us from the 'reversed' indices that we
+    #get in line_index back to real, from-the-beginning indices
+    for line_index, line in enumerate(reversed(lines_to_scan)):
+
+        #remove comments from line
+        if '#' in line:
+            line = line[0:line.find('#')]
+
+        for char_index, char in enumerate(reversed(line)):
+            if char == terminating_char:
+                line_index_in_file = file_line_limit + \
+                    len(lines_to_scan) - (line_index + 1)
+                char_index_in_line = len(line) - char_index
+                return line_column_to_absolute_index(
+                    ''.join(lines),
+                    line_index_in_file,
+                    char_index_in_line)
+
+    #we didn't find anything!
+    raise TerminationNotFoundException(
+        lines,
+        start_line,
+        start_column,
+        terminating_char)

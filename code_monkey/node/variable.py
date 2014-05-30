@@ -4,7 +4,7 @@ from code_monkey.change import VariableChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.utils import (
     absolute_index_to_line_column,
-    line_column_to_absolute_index)
+    find_termination)
 
 class VariableNode(Node):
     '''Node representing a variable assignment inside Python source code.
@@ -92,47 +92,23 @@ class VariableNode(Node):
         #this node begins. if the node is at the end of the file, we get the
         #end of the file instead
         next_sibling = self._astroid_object.next_sibling()
-        astroid_end_line = self._astroid_value.tolineno - 1
         if next_sibling:
-            next_sibling_line = next_sibling.fromlineno
-            next_sibling_column = next_sibling.col_offset
-            lines_to_scan = file_source_lines[
-                astroid_end_line:(next_sibling_line+1)]
-
-            #trim the last line so that we don't include any of the sibling
-            lines_to_scan[-1] = lines_to_scan[-1][0:next_sibling_column]
+            scan_from_line = next_sibling.fromlineno
+            scan_from_column = next_sibling.col_offset - 1
         else:
-            #if there is no sibling, we just start from the end of the file
-            lines_to_scan = file_source_lines[
-                self._astroid_value.tolineno:len(file_source_lines)]
+            scan_from_line = len(file_source_lines) - 1
+            scan_from_column = len(file_source_lines[scan_from_line]) - 1
 
         #this string doesn't have the right formatting, but it should be
         #otherwise correct -- so we can use it to see what character our
         #variable ends on
         terminating_char = self._astroid_value.as_string()[-1]
 
-        #scan through the lines in reverse order, looking for the end of the
-        #node
-
-        #len(lines_to_scan) - (line_index + 1) is the index of a line in
-        #lines_to_scan -- basically, it takes us from the 'reversed'
-        #indices that we get in line_index back to real, from-the-beginning
-        #indices
-        for line_index, line in enumerate(reversed(lines_to_scan)):
-
-            #remove comments from line
-            if '#' in line:
-                line = line[0:line.find('#')]
-
-            for char_index, char in enumerate(reversed(line)):
-                if char == terminating_char:
-                    line_index_in_file = astroid_end_line + (
-                        len(lines_to_scan) - (line_index + 1))
-                    char_index_in_line = len(line) - char_index
-                    return line_column_to_absolute_index(
-                        self.get_file_source_code(),
-                        line_index_in_file,
-                        char_index_in_line)
+        return find_termination(
+            file_source_lines,
+            scan_from_line,
+            scan_from_column,
+            terminating_char)
 
 
     #for variable nodes, it's easiest to find an absolute end index first, then
