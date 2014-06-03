@@ -138,3 +138,18 @@ class NodeQuery(object):
                 filter_matches.append(match)
 
         return NodeQuery(filter_matches)
+
+    def subclass_of_name(self, find_me):
+        '''Match nodes who are a direct subclass of a parent named find_me.
+
+        TODO: create a smarter subclass_of method that takes a ClassNode and
+        scans the tree for direct and indrect subclasses.'''
+
+        filter_matches = []
+
+        for match in self:
+            if hasattr(match._astroid_object, 'basenames') and \
+                    find_me in match._astroid_object.basenames:
+                filter_matches.append(match)
+
+        return NodeQuery(filter_matches)
