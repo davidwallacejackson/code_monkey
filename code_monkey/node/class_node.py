@@ -72,7 +72,7 @@ class ClassNode(Node):
     @property
     def _astroid_child_after_signature(self):
         for child in self._astroid_object.get_children():
-            if not isinstance(child, Name):
+            if not child in self._astroid_object.bases:
                 return child
 
     @property

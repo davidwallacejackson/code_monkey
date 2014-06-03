@@ -120,6 +120,13 @@ def test_source():
         memo_function.get_file_source_code().find(
             "    '''::::send_memo body starts here'''"))
 
+    #uses dots (a 'getattr node') when specifying parent class
+    weird_subclass = package.children['edge_cases'].children['WeirdSubclass']
+    assert_equal(
+        weird_subclass.body_start_index,
+        weird_subclass.get_file_source_code().find(
+            '    pass #WeirdSubclass body starts here'))
+
 
 def test_indentation():
     '''Test that nodes correctly detect their indentation level.'''
