@@ -133,13 +133,22 @@ class NodeQuery(object):
         return NodeQuery(filter_matches)
 
     def source_contains(self, find_me):
-        '''Match nodes whose source contains the string find_me.'''
+        '''Match nodes whose source contains any string in the list find_me. If
+        find_me is a single string, it will be coerced to a list.'''
+
+        if isinstance(find_me, str):
+            find_me = [find_me]
 
         filter_matches = set()
 
         for match in self:
-            if match.get_source_file() and find_me in match.get_source():
-                filter_matches.add(match)
+            if match.get_source_file():
+                source = match.get_source()
+
+                for test_string in find_me:
+                    if test_string in source:
+                        filter_matches.add(match)
+                        break
 
         return NodeQuery(filter_matches)
 
