@@ -173,6 +173,11 @@ class Node(object):
         return lines[self.start_line][0:self.start_column]
 
 
+    #TODO: make nodes not __eq__ after the underlying source has changed.
+    #This would also be a good opportunity to add some kind of caching.
+    def __eq__(self, other):
+        return self.path == other.path
+
     def __unicode__(self):
         return '{}: {}'.format(
             str(self.__class__.__name__),

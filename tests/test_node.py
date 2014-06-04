@@ -133,3 +133,11 @@ def test_indentation():
 
     assert_equal(memo_function.outer_indentation, '')
     assert_equal(memo_function.inner_indentation, '    ')
+
+
+def test_equality():
+    '''create a new copy of the project, and check that a node from that copy is
+    considered equal to the equivalent node from the original.'''
+
+    new_project = ProjectNode(TEST_PROJECT_PATH)
+    assert_equal(new_project.children['lib'], package)
