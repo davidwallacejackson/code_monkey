@@ -1,4 +1,5 @@
 from code_monkey.node import (
+    Node,
     ProjectNode,
     ClassNode,
     FunctionNode,
@@ -18,39 +19,54 @@ class NodeQuery(object):
     '''A set of nodes, which can be filtered down to select nodes that match
     certain criteria.'''
 
-    def __init__(self, matches=[]):
+    def __init__(self, matches=set()):
 
-        #for convenience, NodeQueries called with a single argument will
-        #automatically coerce it to a single-item list
-        if not isinstance(matches, list):
-            matches = [matches]
+        #for convenience, NodeQueries called with a single Node will
+        #automatically coerce it to a single-item set, and they'll coerce lists
+        #into sets as well
+        if isinstance(matches, Node):
+            matches = set([matches])
+        elif isinstance(matches, list):
+            matches = set(matches)
 
         self.matches = matches
 
     def __getitem__(self, index):
-        return self.matches[index]
+        return self.as_list[index]
+
+    def __iter__(self):
+        return self.matches.__iter__()
 
     def __len__(self):
         return len(self.matches)
+
+    @property
+    def as_list(self):
+        '''Returns an ordered list of the nodes in the query. Queries don't
+        change, so we cache the list.'''
+        if not hasattr(self, '_as_list'):
+            self._as_list = list(self.matches)
+
+        return self._as_list
 
     def join(self, *other_queries):
         '''Return a new Query encompassing both this query and all parameter
         Queries'''
 
         #copy our own matches
-        new_matches = list(self.matches)
+        new_matches = self.matches.copy()
 
         for other_query in other_queries:
-            new_matches.extend(other_query.matches)
+            new_matches = new_matches.union(other_query.matches)
 
         return NodeQuery(new_matches)
 
     def children(self):
         '''Return a new Query encompassing all immediate children of matches'''
-        children = []
+        children = set()
 
         for match in self:
-            children.extend(match.children.values())
+            children = children.union(set(match.children.values()))
 
         return NodeQuery(children)
 
@@ -58,7 +74,7 @@ class NodeQuery(object):
         '''Return a flat Query of all nodes descended from matches'''
 
         children = self.children()
-        descendents = NodeQuery([])
+        descendents = NodeQuery(set())
 
         for child in children:
             #first, recurse down and collect any descendents from children...
@@ -66,7 +82,7 @@ class NodeQuery(object):
 
             descendents = descendents.join(child_descendents)
 
-        #...then join the children themselves to the list
+        #...then join the children themselves to the set
         descendents = descendents.join(children)
 
         return descendents
@@ -80,11 +96,11 @@ class NodeQuery(object):
         '''Return only the query elements of a certain type; i.e. ClassNode,
         FunctionNode, etc.'''
 
-        filter_matches = []
+        filter_matches = set()
 
         for match in self:
             if isinstance(match, type_cls):
-                filter_matches.append(match)
+                filter_matches.add(match)
 
         return NodeQuery(filter_matches)
 
@@ -108,22 +124,22 @@ class NodeQuery(object):
 
     def path_contains(self, find_me):
         '''Match nodes whose path contains the string find_me'''
-        filter_matches = []
+        filter_matches = set()
 
         for match in self:
             if find_me in match.path:
-                filter_matches.append(match)
+                filter_matches.add(match)
 
         return NodeQuery(filter_matches)
 
     def source_contains(self, find_me):
         '''Match nodes whose source contains the string find_me.'''
 
-        filter_matches = []
+        filter_matches = set()
 
         for match in self:
             if match.get_source_file() and find_me in match.get_source():
-                filter_matches.append(match)
+                filter_matches.add(match)
 
         return NodeQuery(filter_matches)
 
@@ -131,11 +147,11 @@ class NodeQuery(object):
     def has_child(self, find_me):
         '''Match nodes who have an immediate child with the name find_me'''
 
-        filter_matches = []
+        filter_matches = set()
 
         for match in self:
             if find_me in match.children.keys():
-                filter_matches.append(match)
+                filter_matches.add(match)
 
         return NodeQuery(filter_matches)
 
@@ -145,11 +161,11 @@ class NodeQuery(object):
         TODO: create a smarter subclass_of method that takes a ClassNode and
         scans the tree for direct and indrect subclasses.'''
 
-        filter_matches = []
+        filter_matches = set()
 
         for match in self:
             if hasattr(match._astroid_object, 'basenames') and \
                     find_me in match._astroid_object.basenames:
-                filter_matches.append(match)
+                filter_matches.add(match)
 
         return NodeQuery(filter_matches)

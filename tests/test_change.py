@@ -35,7 +35,7 @@ def test_change_value():
 
     q = project_query(TEST_PROJECT_PATH)
 
-    setting_node = q.flatten().path_contains('MULTILINE_SETTING').matches[0]
+    setting_node = q.flatten().path_contains('MULTILINE_SETTING')[0]
 
     change = setting_node.change.value(42)
     assert_equal(change.new_text, '42')

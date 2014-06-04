@@ -24,7 +24,7 @@ def test_descent():
 
     #.children() should only get the direct children of matches -- and we only
     #have one match in q
-    assert_equal(len(q.children()), len(q.matches[0].children))
+    assert_equal(len(q.children()), len(q[0].children))
 
     #the number of nodes in the whole project tree, including the root
     assert_equal(len(q.flatten()), 22)
@@ -66,3 +66,12 @@ def test_find_filters():
     weird_subclass_query = q.flatten().classes().subclass_of_name(
         'datetime.datetime')
     assert_equal(weird_subclass_query[0].name, 'WeirdSubclass')
+
+def test_no_duplicates():
+    '''Test that duplicates of the same Node are omitted from queries.'''
+
+    #flatten the whole tree, and join() it with itself:
+    flattened = q.flatten()
+    assert_equal(
+        len(flattened),
+        len(flattened.join(flattened)))
