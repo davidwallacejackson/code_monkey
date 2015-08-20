@@ -6,7 +6,7 @@ from code_monkey.node import (
     ModuleNode,
     PackageNode,
     ProjectNode,
-    VariableNode)
+    AssignmentNode)
 
 def project_query(project_path):
     '''Return a NodeQuery containing a ProjectNode representing the Python
@@ -120,7 +120,7 @@ class NodeQuery(object):
 
     def variables(self):
         #variables at module scope only
-        return self.filter_type(VariableNode)
+        return self.filter_type(AssignmentNode)
 
     def path_contains(self, find_me):
         '''Match nodes whose path contains the string find_me'''

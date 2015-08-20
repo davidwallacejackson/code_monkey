@@ -6,7 +6,7 @@ from code_monkey.utils import (
     absolute_index_to_line_column,
     find_termination)
 
-class VariableNode(Node):
+class AssignmentNode(Node):
     '''Node representing a variable assignment inside Python source code.
 
     The body of the variable is considered to be everything on the right of the
@@ -14,7 +14,7 @@ class VariableNode(Node):
     and functions, a variable's source does NOT include a newline at the end.'''
 
     def __init__(self, parent, astroid_object):
-        super(VariableNode, self).__init__()
+        super(AssignmentNode, self).__init__()
 
         self.parent = parent
 
@@ -38,7 +38,7 @@ class VariableNode(Node):
             self.name = self._astroid_name.as_string()
 
     def eval_body(self):
-        '''Attempt to evaluate the body (i.e., the value) of this VariableNode
+        '''Attempt to evaluate the body (i.e., the value) of this AssignmentNode
         using ast.literal_eval (which will evaluate ONLY Python literals).
 
         Return the value if successful, otherwise, return None.'''
@@ -55,7 +55,7 @@ class VariableNode(Node):
     def change(self):
         return VariableChangeGenerator(self)
 
-    #the 'whole source' of a VariableNode includes the name and the value
+    #the 'whole source' of a AssignmentNode includes the name and the value
     @property
     def start_line(self):
         return self._astroid_name.fromlineno - 1
@@ -64,7 +64,7 @@ class VariableNode(Node):
     def start_column(self):
         return self._astroid_name.col_offset
 
-    #in a VariableNode, the _astroid_value represents the body
+    #in a AssignmentNode, the _astroid_value represents the body
     @property
     def body_start_line(self):
         return self._astroid_value.fromlineno - 1

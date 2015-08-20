@@ -7,7 +7,7 @@ from code_monkey.node import (
     ModuleNode,
     PackageNode,
     ProjectNode,
-    VariableNode)
+    AssignmentNode)
 
 TEST_PROJECT_PATH = path.join(
     path.dirname(path.realpath(__file__)),
@@ -86,7 +86,7 @@ def test_node_tree():
     assert_is_instance(root_module, ModuleNode)
     assert_is_instance(employee_module, ModuleNode)
 
-    assert_is_instance(module_var, VariableNode)
+    assert_is_instance(module_var, AssignmentNode)
     assert_is_instance(employee_class, ClassNode)
 
     assert_equal(employee_class.path, 'test_project.lib.employee.Employee')

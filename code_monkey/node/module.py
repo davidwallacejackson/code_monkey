@@ -7,7 +7,7 @@ from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.node.class_node import ClassNode
 from code_monkey.node.function import FunctionNode
-from code_monkey.node.variable import VariableNode
+from code_monkey.node.variable import AssignmentNode
 
 class ModuleNode(Node):
     '''Node representing a module (a single Python source file).'''
@@ -56,7 +56,7 @@ class ModuleNode(Node):
 
                 #we don't know the name of the variable until we build the Node,
                 #so we build the node before adding it to the children dict
-                child_node = VariableNode(
+                child_node = AssignmentNode(
                     parent=self,
                     astroid_object=child)
 

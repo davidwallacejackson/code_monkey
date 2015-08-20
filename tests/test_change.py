@@ -30,7 +30,7 @@ def test_str():
 
 
 def test_change_value():
-    '''Test that we can take a VariableNode and overwrite its current body with
+    '''Test that we can take a AssignmentNode and overwrite its current body with
     code generated from a new python value.'''
 
     q = project_query(TEST_PROJECT_PATH)

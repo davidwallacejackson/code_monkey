@@ -8,7 +8,7 @@ from code_monkey.node import (
     ModuleNode,
     PackageNode,
     ProjectNode,
-    VariableNode)
+    AssignmentNode)
 from code_monkey.node_query import NodeQuery
 
 TEST_PROJECT_PATH = path.join(
@@ -45,7 +45,7 @@ def test_type_filters():
         assert_is_instance(match, FunctionNode)
 
     for match in q.flatten().variables():
-        assert_is_instance(match, VariableNode)
+        assert_is_instance(match, AssignmentNode)
 
 
 def test_find_filters():
