@@ -7,7 +7,7 @@ from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.node.class_node import ClassNode
 from code_monkey.node.function import FunctionNode
-from code_monkey.node.variable import AssignmentNode
+from code_monkey.node.assignment import AssignmentNode
 
 class ModuleNode(Node):
     '''Node representing a module (a single Python source file).'''

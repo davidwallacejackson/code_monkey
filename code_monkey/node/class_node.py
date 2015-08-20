@@ -7,7 +7,7 @@ from astroid.scoped_nodes import Class, Function
 from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.node.function import FunctionNode
-from code_monkey.node.variable import AssignmentNode
+from code_monkey.node.assignment import AssignmentNode
 from code_monkey.utils import (
     absolute_index_to_line_column,
     find_termination,

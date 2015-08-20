@@ -15,4 +15,4 @@ from code_monkey.node.function import FunctionNode
 from code_monkey.node.module import ModuleNode
 from code_monkey.node.package import PackageNode
 from code_monkey.node.project import ProjectNode
-from code_monkey.node.variable import AssignmentNode
+from code_monkey.node.assignment import AssignmentNode
