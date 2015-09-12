@@ -1,5 +1,5 @@
 from astroid.manager import AstroidManager
-from astroid.node_classes import Assign
+from astroid.node_classes import Assign, Import
 from astroid.scoped_nodes import Class, Function
 from logilab.common.modutils import modpath_from_file
 
@@ -7,6 +7,7 @@ from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.node.class_node import ClassNode
 from code_monkey.node.function import FunctionNode
+from code_monkey.node.import_node import ImportNode
 from code_monkey.node.assignment import AssignmentNode
 
 class ModuleNode(Node):
@@ -58,6 +59,25 @@ class ModuleNode(Node):
                 #so we build the node before adding it to the children dict
                 child_node = AssignmentNode(
                     parent=self,
+                    astroid_object=child)
+
+                children[child_node.name] = child_node
+
+            elif isinstance(child, Import):
+                base_name = child.names[0][0]
+                name = base_name
+
+                index = 0
+                while name in children:
+                    name = base_name + '_' + str(index)
+                    index += 1
+
+                # so for multiple imports from datetime, you get datetime,
+                # datetime_0, datetime_1 etc.
+
+                child_node = ImportNode(
+                    parent=self,
+                    name=name,
                     astroid_object=child)
 
                 children[child_node.name] = child_node

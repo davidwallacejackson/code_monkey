@@ -3,6 +3,7 @@ from code_monkey.node import (
     ProjectNode,
     ClassNode,
     FunctionNode,
+    ImportNode,
     ModuleNode,
     PackageNode,
     ProjectNode,
@@ -121,6 +122,9 @@ class NodeQuery(object):
     def variables(self):
         #variables at module scope only
         return self.filter_type(AssignmentNode)
+
+    def imports(self):
+        return self.filter_type(ImportNode)
 
     def path_contains(self, find_me):
         '''Match nodes whose path contains the string find_me'''

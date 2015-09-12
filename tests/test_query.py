@@ -5,6 +5,7 @@ from nose.tools import assert_equal, assert_is_instance, assert_not_equal
 from code_monkey.node import (
     ClassNode,
     FunctionNode,
+    ImportNode,
     ModuleNode,
     PackageNode,
     ProjectNode,
@@ -27,7 +28,7 @@ def test_descent():
     assert_equal(len(q.children()), len(q[0].children))
 
     #the number of nodes in the whole project tree, including the root
-    assert_equal(len(q.flatten()), 22)
+    assert_equal(len(q.flatten()), 23)
 
 
 def test_type_filters():
@@ -46,6 +47,9 @@ def test_type_filters():
 
     for match in q.flatten().variables():
         assert_is_instance(match, AssignmentNode)
+
+    for match in q.flatten().imports():
+        assert_is_instance(match, ImportNode)
 
 
 def test_find_filters():

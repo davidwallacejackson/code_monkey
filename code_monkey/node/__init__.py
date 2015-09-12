@@ -12,6 +12,7 @@ from code_monkey.node.base import Node
 
 from code_monkey.node.class_node import ClassNode
 from code_monkey.node.function import FunctionNode
+from code_monkey.node.import_node import ImportNode
 from code_monkey.node.module import ModuleNode
 from code_monkey.node.package import PackageNode
 from code_monkey.node.project import ProjectNode
