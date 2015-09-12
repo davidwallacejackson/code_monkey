@@ -6,7 +6,7 @@ from astroid.scoped_nodes import Class, Function
 
 from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.assignment import AssignmentNode
-from code_monkey.node.base import Node
+from code_monkey.node.source import SourceNode
 from code_monkey.node.function import FunctionNode
 from code_monkey.node.import_node import ImportNode
 from code_monkey.utils import (
@@ -15,16 +15,9 @@ from code_monkey.utils import (
     safe_docstring)
 
 
-class ClassNode(Node):
+class ClassNode(SourceNode):
     '''Node representing a Python class. The class may be at the module level,
     or nested inside another class.'''
-
-    def __init__(self, parent, name, astroid_object):
-        super(ClassNode, self).__init__()
-
-        self.parent = parent
-        self.name = name
-        self._astroid_object = astroid_object
 
     @property
     def change(self):

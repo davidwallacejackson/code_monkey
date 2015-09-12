@@ -1,22 +1,15 @@
 from astroid.node_classes import Arguments
 
 from code_monkey.change import SourceChangeGenerator
-from code_monkey.node.base import Node
+from code_monkey.node.source import SourceNode
 from code_monkey.utils import (
     absolute_index_to_line_column,
     find_termination,
     safe_docstring)
 
-class FunctionNode(Node):
+class FunctionNode(SourceNode):
     '''Class representing a Python function or method, at the module or class
     level.'''
-
-    def __init__(self, parent, name, astroid_object):
-        super(FunctionNode, self).__init__()
-
-        self.parent = parent
-        self.name = name
-        self._astroid_object = astroid_object
 
     @property
     def change(self):

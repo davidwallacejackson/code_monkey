@@ -1,12 +1,12 @@
 from ast import literal_eval
 
 from code_monkey.change import VariableChangeGenerator
-from code_monkey.node.base import Node
+from code_monkey.node.source import SourceNode
 from code_monkey.utils import (
     absolute_index_to_line_column,
     find_termination)
 
-class AssignmentNode(Node):
+class AssignmentNode(SourceNode):
     '''Node representing a variable assignment inside Python source code.
 
     The body of the variable is considered to be everything on the right of the
@@ -14,28 +14,26 @@ class AssignmentNode(Node):
     and functions, a variable's source does NOT include a newline at the end.'''
 
     def __init__(self, parent, astroid_object):
-        super(AssignmentNode, self).__init__()
-
-        self.parent = parent
-
         #the _astroid_object (an Assign object) has TWO children that we need to
-        #consider: (the variable name) and another astroid node (the 'right
+        #consider: the variable name, and another astroid node (the 'right
         #hand' value)
-        self._astroid_object = astroid_object
-
-        #TODO: account for tuple assignment
-        self._astroid_name = self._astroid_object.targets[0]
-        self._astroid_value = self._astroid_object.value
+        self._astroid_name = astroid_object.targets[0]
+        self._astroid_value = astroid_object.value
 
         try:
-            self.name = self._astroid_name.name
+            name = self._astroid_name.name
         except AttributeError:
             #'subscript' assignments (a[b] = ...) don't have a name in astroid.
             #instead, we give them one by reading their source
 
             #TODO: this can result in names containing dots, which is invalid.
             #need a better solution
-            self.name = self._astroid_name.as_string()
+            name = self._astroid_name.as_string()
+
+        super(AssignmentNode, self).__init__(
+            parent=parent,
+            name=name,
+            astroid_object=astroid_object)
 
     def eval_body(self):
         '''Attempt to evaluate the body (i.e., the value) of this AssignmentNode
