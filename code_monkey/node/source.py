@@ -1,3 +1,6 @@
+from astroid.node_classes import Assign, Import
+from astroid.scoped_nodes import Class, Function
+
 from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 from code_monkey.utils import (
@@ -153,3 +156,64 @@ class SourceNode(Node):
         lines = self.get_file_source_code().splitlines(True)
         return lines[self.start_line][0:self.start_column]
 
+    @property
+    def children(self):
+        #avoid circular imports
+        from code_monkey.node import (
+            ClassNode,
+            FunctionNode,
+            ImportNode,
+            AssignmentNode)
+
+        #all of the children found by astroid:
+
+        astroid_children = self._astroid_object.get_children()
+        children = {}
+
+        for child in astroid_children:
+
+            if isinstance(child, Class):
+
+                children[child.name] = ClassNode(
+                    parent=self,
+                    name=child.name,
+                    astroid_object=child)
+
+            elif isinstance(child, Function):
+
+                children[child.name] = FunctionNode(
+                    parent=self,
+                    name=child.name,
+                    astroid_object=child)
+
+            elif isinstance(child, Assign):
+                #Assign is the class representing a variable assignment.
+
+                #we don't know the name of the variable until we build the Node,
+                #so we build the node before adding it to the children dict
+                child_node = AssignmentNode(
+                    parent=self,
+                    astroid_object=child)
+
+                children[child_node.name] = child_node
+
+            elif isinstance(child, Import):
+                base_name = child.names[0][0]
+                name = base_name
+
+                index = 0
+                while name in children:
+                    name = base_name + '_' + str(index)
+                    index += 1
+
+                # so for multiple imports from datetime, you get datetime,
+                # datetime_0, datetime_1 etc.
+
+                child_node = ImportNode(
+                    parent=self,
+                    name=name,
+                    astroid_object=child)
+
+                children[child_node.name] = child_node
+
+        return children
