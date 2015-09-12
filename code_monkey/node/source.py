@@ -152,3 +152,4 @@ class SourceNode(Node):
         begins.'''
         lines = self.get_file_source_code().splitlines(True)
         return lines[self.start_line][0:self.start_column]
+

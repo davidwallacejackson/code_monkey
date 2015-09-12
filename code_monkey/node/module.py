@@ -4,26 +4,28 @@ from astroid.scoped_nodes import Class, Function
 from logilab.common.modutils import modpath_from_file
 
 from code_monkey.change import SourceChangeGenerator
-from code_monkey.node.base import Node
 from code_monkey.node.class_node import ClassNode
 from code_monkey.node.function import FunctionNode
 from code_monkey.node.import_node import ImportNode
 from code_monkey.node.assignment import AssignmentNode
+from code_monkey.node.source import SourceNode
 
-class ModuleNode(Node):
+class ModuleNode(SourceNode):
     '''Node representing a module (a single Python source file).'''
 
     def __init__(self, parent, fs_path):
-        super(ModuleNode, self).__init__()
-
-        self.parent = parent
-        self._fs_path = fs_path
-
         #gets the module name -- the whole return value of modpath_from_file
         #is a list containing each element of the dotpath
-        self.name = modpath_from_file(fs_path)[-1]
+        name = modpath_from_file(fs_path)[-1]
 
-        self._astroid_object = AstroidManager().ast_from_file(fs_path)
+        astroid_object = AstroidManager().ast_from_file(fs_path)
+
+        super(ModuleNode, self).__init__(
+            name=name,
+            parent=parent,
+            astroid_object=astroid_object)
+
+        self._fs_path = fs_path
 
     @property
     def change(self):
@@ -95,3 +97,7 @@ class ModuleNode(Node):
         #for modules, astroid gives None as the column offset -- by our
         #conventions, it should be 0
         return 0
+
+    @property
+    def fs_path(self):
+        return self._fs_path
