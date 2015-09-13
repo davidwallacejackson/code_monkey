@@ -32,7 +32,7 @@ add a new fixture to your test classes, for example:
 ```python
     q = project_query('/path/to/my/project')
     test_classes = q.flatten().classes().path_contains('tests')
-    fixture_lists = test_classes.flatten().variables()
+    fixture_lists = test_classes.flatten().assignments()
 
     changeset = ChangeSet()
 

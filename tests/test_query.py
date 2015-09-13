@@ -45,7 +45,7 @@ def test_type_filters():
     for match in q.flatten().functions():
         assert_is_instance(match, FunctionNode)
 
-    for match in q.flatten().variables():
+    for match in q.flatten().assignments():
         assert_is_instance(match, AssignmentNode)
 
     for match in q.flatten().imports():
