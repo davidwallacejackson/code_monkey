@@ -141,3 +141,15 @@ def test_equality():
 
     new_project = ProjectNode(TEST_PROJECT_PATH)
     assert_equal(new_project.children['lib'], package)
+
+def test_literals_source():
+    '''Test that LiteralNodes can identify their own source.'''
+
+    str_node = root_module.children['ONE_LINER'].children['literal']
+    int_node = root_module.children['BASE_PAY'].children['literal']
+
+    assert_equal(str_node.get_source(), "'foobar'")
+    assert_equal(str_node.start_line, 0)
+    assert_equal(str_node.end_line, 0)
+
+    assert_equal(int_node.get_source(), '100')

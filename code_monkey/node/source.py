@@ -1,4 +1,4 @@
-from astroid.node_classes import Assign, Import
+from astroid.node_classes import Assign, Import, Const, Dict
 from astroid.scoped_nodes import Class, Function
 
 from code_monkey.change import SourceChangeGenerator
@@ -176,7 +176,8 @@ class SourceNode(Node):
             ClassNode,
             FunctionNode,
             ImportNode,
-            AssignmentNode)
+            AssignmentNode,
+            LiteralNode)
 
         #all of the children found by astroid:
 
@@ -223,6 +224,22 @@ class SourceNode(Node):
                 # datetime_0, datetime_1 etc.
 
                 child_node = ImportNode(
+                    parent=self,
+                    name=name,
+                    astroid_object=child)
+
+                children[child_node.name] = child_node
+
+            elif isinstance(child, (Const, Dict)):
+                base_name = 'literal'
+                name = base_name
+
+                index = 0
+                while name in children:
+                    name = base_name + '_' + str(index)
+                    index += 1
+
+                child_node = LiteralNode(
                     parent=self,
                     name=name,
                     astroid_object=child)

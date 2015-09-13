@@ -7,7 +7,8 @@ from code_monkey.node import (
     ModuleNode,
     PackageNode,
     ProjectNode,
-    AssignmentNode)
+    AssignmentNode,
+    LiteralNode)
 
 def project_query(project_path):
     '''Take a filesystem path project_path, and return a NodeQuery containing
@@ -136,6 +137,10 @@ class NodeQuery(object):
     def imports(self):
         '''Return a query containing only ImportNodes.'''
         return self.filter_type(ImportNode)
+
+    def literals(self):
+        '''Return a query containing only LiteralNodes.'''
+        return self.filter_type(LiteralNode)
 
     def path_contains(self, find_me):
         '''Match nodes whose path contains the string find_me'''

@@ -28,7 +28,7 @@ def test_descent():
     assert_equal(len(q.children()), len(q[0].children))
 
     #the number of nodes in the whole project tree, including the root
-    assert_equal(len(q.flatten()), 30)
+    assert_equal(len(q.flatten()), 43)
 
 
 def test_type_filters():
@@ -79,3 +79,11 @@ def test_no_duplicates():
     assert_equal(
         len(flattened),
         len(flattened.join(flattened)))
+
+def test_literals():
+    '''Test that we can find several types of literal nodes.'''
+
+    literals = q.flatten().literals()
+
+    assert_equal(literals.path_contains('ONE_LINER')[0].value_type, 'str')
+    assert_equal(literals.path_contains('BASE_PAY')[0].value_type, 'int')

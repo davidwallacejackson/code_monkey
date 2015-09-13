@@ -35,7 +35,7 @@ def test_change_value():
 
     q = project_query(TEST_PROJECT_PATH)
 
-    setting_node = q.flatten().path_contains('MULTILINE_SETTING')[0]
+    setting_node = q.flatten().assignments().path_contains('MULTILINE_SETTING')[0]
 
     change = setting_node.change.value(42)
     assert_equal(change.new_text, '42')
@@ -45,7 +45,7 @@ def test_change_value():
 
 def test_inject_before():
     '''Test that inject_before injects code on the line before the node.'''
-    q = project_query(TEST_PROJECT_PATH).flatten()
+    q = project_query(TEST_PROJECT_PATH).flatten().assignments()
 
     node_at_start = q.path_contains('ONE_LINER')[0]
 
@@ -62,7 +62,7 @@ def test_inject_before():
 
 def test_inject_after():
     '''Test that inject_after injects code on the line after the node.'''
-    q = project_query(TEST_PROJECT_PATH).flatten()
+    q = project_query(TEST_PROJECT_PATH).flatten().assignments()
 
     node_at_start = q.path_contains('ONE_LINER')[0]
 
