@@ -1,6 +1,6 @@
 from os import path
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 
 from code_monkey.node_query import project_query
 from code_monkey.change import Change
@@ -42,3 +42,37 @@ def test_change_value():
 
     change = setting_node.change.value([42])
     assert_equal(change.new_text, '[\n    42\n]')
+
+def test_inject_before():
+    '''Test that inject_before injects code on the line before the node.'''
+    q = project_query(TEST_PROJECT_PATH).flatten()
+
+    node_at_start = q.path_contains('ONE_LINER')[0]
+
+    change = node_at_start.change.inject_before('foobar = "baz"\n')
+    assert_in(
+        "+foobar = \"baz\"\n ONE_LINER = 'foobar'",
+        str(change))
+
+    node_at_end = q.path_contains('BASE_PAY')[0]
+    change = node_at_end.change.inject_before('foobar = "baz"\n')
+    assert_in(
+        "+foobar = \"baz\"\n BASE_PAY = 100",
+        str(change))
+
+def test_inject_after():
+    '''Test that inject_after injects code on the line after the node.'''
+    q = project_query(TEST_PROJECT_PATH).flatten()
+
+    node_at_start = q.path_contains('ONE_LINER')[0]
+
+    change = node_at_start.change.inject_after('foobar = "baz"\n')
+    assert_in(
+        " ONE_LINER = 'foobar'\n+foobar = \"baz\"",
+        str(change))
+
+    node_at_end = q.path_contains('BASE_PAY')[0]
+    change = node_at_end.change.inject_after('foobar = "baz"\n')
+    assert_in(
+        "-BASE_PAY = 100+BASE_PAY = 100\n+foobar = \"baz\"",
+        str(change))

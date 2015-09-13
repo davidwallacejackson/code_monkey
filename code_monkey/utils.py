@@ -60,6 +60,18 @@ def line_column_to_absolute_index(text, line, column):
     '''Given line and column numbers (0-indexed) for a string text, return the
     corresponding index in the entire string.'''
 
+    if line < 0:
+        raise ValueError("Negative line index {} is invalid.".format(
+            line))
+
+    total_lines = text.count('\n')
+
+    if line > total_lines:
+        raise ValueError(
+            "Asked for line {} (0-indexed), but string has only {} lines".format(
+                line, total_lines + 1))
+
+
     if line == 0:
         line_start_index = 0
     else:
@@ -151,3 +163,7 @@ def safe_docstring(input):
     signature as well. Hopefully, that's a rare case, but: TODO: fix that.'''
 
     return input.replace(':', ' ')
+
+def count_lines(text):
+    '''Return the number of lines in text.'''
+    return text.count('\n')

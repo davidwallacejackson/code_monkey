@@ -133,6 +133,51 @@ class ChangeGenerator(object):
         return self.inject_at_body_index(
             character_index_of_line, inject_source)
 
+    def inject_before(self, inject_source):
+        '''Generate a change that inserts inject_source starting on the line
+        before this node.'''
+        try:
+            character_index_of_line = line_column_to_absolute_index(
+                self.node.get_file_source_code(),
+                self.node.start_line,
+                0)
+        except ValueError:
+            # our node is at the beginning of its file
+            # we'll need to select the first character of the file...
+            character_index_of_line = 0
+
+            # ...and "create" a line by inserting a newline into our source
+            inject_source = '\n' + inject_source
+
+        return Change(
+            self.node.fs_path,
+            character_index_of_line,
+            character_index_of_line,
+            inject_source)
+
+
+    def inject_after(self, inject_source):
+        '''Generate a change that inserts inject_source starting on the line
+        after this node.'''
+        try:
+            character_index_of_line = line_column_to_absolute_index(
+                self.node.get_file_source_code(),
+                self.node.end_line + 1,
+                0)
+        except ValueError:
+            # our node is at the end of its file
+            # we'll need to select the last character of the file...
+            character_index_of_line = len(self.node.get_file_source_code())
+
+            # ...and "create" a line by inserting a newline into our source
+            inject_source = '\n' + inject_source
+
+        return Change(
+            self.node.fs_path,
+            character_index_of_line,
+            character_index_of_line,
+            inject_source)
+
 
 class SourceChangeGenerator(ChangeGenerator):
     '''ChangeGenerator for Nodes that encompass a body of full Python source
