@@ -12,7 +12,14 @@ from code_monkey.utils import line_column_to_absolute_index
 
 class Change(object):
     '''A single change to make to a single file. Replaces the file content
-    from indices start through (end-1) with new_text.'''
+    from indices start through (end-1) with new_text.
+
+    Args:
+        path (str): The filesystem path of the file to edit.
+        start (int): The index of the beginning of the region to overwrite.
+        end (int): The index of the end of the region to overwrite
+                   (non-inclusive).
+        new_text (str): The new text to write over the old region.'''
     def __init__(self, path, start, end, new_text):
         self.path = path
         self.start = start

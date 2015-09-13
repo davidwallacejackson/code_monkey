@@ -10,8 +10,11 @@ from code_monkey.node import (
     AssignmentNode)
 
 def project_query(project_path):
-    '''Return a NodeQuery containing a ProjectNode representing the Python
-    project at project_path.'''
+    '''Take a filesystem path project_path, and return a NodeQuery containing
+    a ProjectNode representing the Python project at that path.
+
+    When working with a new project, this is usually the first thing you
+    should use.'''
 
     return NodeQuery(
         ProjectNode(project_path))
@@ -51,8 +54,8 @@ class NodeQuery(object):
         return self._as_list
 
     def join(self, *other_queries):
-        '''Return a new Query encompassing both this query and all parameter
-        Queries'''
+        '''Return a new query encompassing both this query and all parameter
+        queries'''
 
         #copy our own matches
         new_matches = self.matches.copy()
@@ -63,7 +66,7 @@ class NodeQuery(object):
         return NodeQuery(new_matches)
 
     def children(self):
-        '''Return a new Query encompassing all immediate children of matches'''
+        '''Return a new query encompassing all immediate children of matches'''
         children = set()
 
         for match in self:
@@ -72,7 +75,7 @@ class NodeQuery(object):
         return NodeQuery(children)
 
     def descendents(self):
-        '''Return a flat Query of all nodes descended from matches'''
+        '''Return a flat query of all nodes descended from matches'''
 
         children = self.children()
         descendents = NodeQuery(set())
@@ -106,24 +109,32 @@ class NodeQuery(object):
         return NodeQuery(filter_matches)
 
     def packages(self):
+        '''Return a query containing only PackageNodes.'''
         return self.filter_type(PackageNode)
 
     def modules(self):
-        #'leaf' modules only; though Python considers packages to be a type of
-        #module, we do not
+        '''Return a query containing only ModuleNodes.
+
+        Note that ModuleNodes represent 'leaf' modules only; while Python
+        considers a package to be a type of module, code_monkey does not.'''
         return self.filter_type(ModuleNode)
 
     def classes(self):
+        '''Return a query containing only ClassNodes.'''
         return self.filter_type(ClassNode)
 
     def functions(self):
+        '''Return a query containing only FunctionNodes, which may represent
+        functions or methods.'''
         return self.filter_type(FunctionNode)
 
-    def variables(self):
-        #variables at module scope only
+    def assignments(self):
+        '''Return a query containing only AssignmentNodes, which represent
+        variable assignments.'''
         return self.filter_type(AssignmentNode)
 
     def imports(self):
+        '''Return a query containing only ImportNodes.'''
         return self.filter_type(ImportNode)
 
     def path_contains(self, find_me):
@@ -169,10 +180,9 @@ class NodeQuery(object):
         return NodeQuery(filter_matches)
 
     def subclass_of_name(self, find_me):
-        '''Match nodes who are a direct subclass of a parent named find_me.
-
-        TODO: create a smarter subclass_of method that takes a ClassNode and
-        scans the tree for direct and indrect subclasses.'''
+        '''Match nodes who are a direct subclass of a parent named find_me.'''
+        # TODO: create a smarter subclass_of method that takes a ClassNode and
+        # scans the tree for direct and indrect subclasses.
 
         filter_matches = set()
 

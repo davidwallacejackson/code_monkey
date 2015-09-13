@@ -58,8 +58,12 @@ setup(
     extras_require={
         'test': [
             'coverage==3.7.1',
-            'nose==1.3.3'
+            'nose==1.3.3',
         ],
+        'dev': [
+            'Sphinx==1.3.1',
+            'sphinx-rtd-theme==0.1.8'
+        ]
     },
 
 )

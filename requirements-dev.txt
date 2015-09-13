@@ -1,2 +1,2 @@
 #refer to setup.py
--e .[dev]
+-e .[dev,test]

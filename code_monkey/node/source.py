@@ -113,6 +113,12 @@ class SourceNode(Node):
     def body_end_index(self):
         '''The character index of the character after the end of the node body,
         relative to the entire source file.'''
+        if self.body_end_line == count_lines(self.get_file_source_code()) + 1:
+            # we're on the last line
+            # the "next index" doesn't really exist -- it's the end of the file
+            # + 1
+            return len(self.get_file_source_code())
+
         return line_column_to_absolute_index(
             self.get_file_source_code(),
             self.body_end_line,
