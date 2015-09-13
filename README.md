@@ -6,6 +6,11 @@ projects. It builds a tree representing your project, then provides an easy API
 for querying nodes out of the tree. Once you've found the nodes you're looking
 for, you can generate changes and apply them to your whole project at once.
 
+Full documentation is available [here](http://code-monkey.readthedocs.org/en/latest/).
+
+Usage
+-----
+
 For instance, let's say you wanted to add a certain line to every test class in
 your project:
 

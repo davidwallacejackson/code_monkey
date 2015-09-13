@@ -18,7 +18,7 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='',
+    url='https://github.com/ForSpareParts/code_monkey',
 
     # Author details
     author='David Jackson',
@@ -31,7 +31,7 @@ setup(
         'Development Status :: 3 - Alpha',
 
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Code Generators'
+        'Topic :: Software Development :: Code Generators',
 
         'License :: OSI Approved :: MIT License',
 
