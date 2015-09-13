@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='code_monkey',
 
-    version='0.0.1',
+    version='0.0.2',
 
     description='A Python refactoring/static analysis tool',
 
