@@ -9,6 +9,7 @@ for, you can generate changes and apply them to your whole project at once.
 For instance, let's say you wanted to add a certain line to every test class in
 your project:
 
+```python
     from code_monkey.node_query import project_query
     from code_monkey.edit import ChangeSet
 
@@ -22,12 +23,13 @@ your project:
             node.change.inject_at_body_line(1, '    foobar = 42\n'))
 
     changeset.commit()
-
+```
 
 code_monkey can also extract the value of some variables (anything that is
 composed of Python literals), make changes, and write it back to the node. To
 add a new fixture to your test classes, for example:
 
+```python
     q = project_query('/path/to/my/project')
     test_classes = q.flatten().classes().path_contains('tests')
     fixture_lists = test_classes.flatten().variables()
@@ -43,3 +45,4 @@ add a new fixture to your test classes, for example:
             node.change.value(fixtures))
 
     changeset.commit()
+```
