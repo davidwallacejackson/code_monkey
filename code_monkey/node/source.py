@@ -177,7 +177,7 @@ class SourceNode(Node):
             FunctionNode,
             ImportNode,
             AssignmentNode,
-            LiteralNode)
+            ConstantNode)
 
         #all of the children found by astroid:
 
@@ -230,8 +230,8 @@ class SourceNode(Node):
 
                 children[child_node.name] = child_node
 
-            elif isinstance(child, (Const, Dict)):
-                base_name = 'literal'
+            elif isinstance(child, Const):
+                base_name = 'constant'
                 name = base_name
 
                 index = 0
@@ -239,7 +239,7 @@ class SourceNode(Node):
                     name = base_name + '_' + str(index)
                     index += 1
 
-                child_node = LiteralNode(
+                child_node = ConstantNode(
                     parent=self,
                     name=name,
                     astroid_object=child)
