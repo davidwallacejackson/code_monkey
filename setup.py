@@ -5,17 +5,12 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-# Get the long description from the relevant file
-with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
-    long_description = f.read()
-
 setup(
     name='code_monkey',
 
     version='0.0.1',
 
     description='A Python refactoring/static analysis tool',
-    long_description=long_description,
 
     # The project's main homepage.
     url='https://github.com/ForSpareParts/code_monkey',
