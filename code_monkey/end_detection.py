@@ -58,93 +58,6 @@ BIN_OP_TOKENS = [
     token_types.DOUBLESLASHEQUAL,
 ]
 
-class ParseError(Exception):
-    pass
-
-class EndDetector:
-
-    def __init__(self, source):
-        self.source = source
-        self.last_consumed = None
-
-    def consume_or_error(self, tokens, types, matches=[]):
-        '''Return tokens[1:] if tokens[0] is either one of the types in types, or
-        exactly matches a string in matches. Otherwise, raise an error.'''
-
-        if not (tokens[0]['type'] in types or tokens[0]['token'] in matches):
-            raise ParseError("Expected type {} or match {}, but got {}".format(
-                types,
-                matches,
-                tokens[0]))
-
-        self.last_consumed = tokens[0]
-        return tokens[1:]
-
-
-    def consume_zero_or_more(self, tokens, types, matches=[]):
-        '''Consume any leading tokens indicated by types or matches. Return a tuple
-        (count, tokens), where count is the number of tokens removed and tokens is
-        the list of remaining tokens.'''
-
-        index = 0
-
-        while tokens[index]['type'] in types or tokens[index]['token'] in matches:
-            self.last_consumed = tokens[index]
-            index += 1
-
-        return (index, tokens[index:])
-
-    def consume_before(self, tokens, start_from):
-        index = 0
-
-        while line_column_to_absolute_index(
-                self.source,
-                tokens[index]['start'][0],
-                tokens[index]['start'][1]) < start_from:
-            self.last_consumed = tokens[index]
-            index += 1
-
-        return tokens[index:]
-
-
-    def find_end_constant(self, start_from):
-        '''Return the index of the character *after* the first Python constant
-        found in source.
-
-        All tokens beginning before index start_from will be ignored (this is
-        necessary because the Python tokenizer won't work on certain incomplete
-        lines, so we have to pass the *whole* line in and tokenize it).'''
-
-        tokens = get_tokens(self.source)
-
-        tokens = self.consume_before(tokens, start_from)
-
-        lpar_count, tokens = self.consume_zero_or_more(
-            tokens,
-            [], ['('])
-
-        # _, tokens = self.consume_zero_or_more(tokens, [token_types.INDENT])
-
-        tokens = self.consume_or_error(tokens, CONSTANT_TOKENS, CONSTANT_NAMES)
-
-        # _, tokens = self.consume_zero_or_more(tokens, [token_types.INDENT])
-
-        rpar_count, tokens = self.consume_zero_or_more(
-            tokens,
-            [], [')'])
-
-        if lpar_count > rpar_count:
-            raise ParseError(UNMATCHED.format('(', ')', self.source))
-        elif lpar_count < rpar_count:
-            raise ParseError(UNMATCHED.format(')', '(', self.source))
-
-        return line_column_to_absolute_index(
-            self.source,
-            self.last_consumed['end'][0],
-            self.last_consumed['end'][1])
-
-
-
 def get_tokens(source):
     '''Return an array of token dicts in source.'''
     return [
@@ -158,121 +71,146 @@ def get_tokens(source):
         tokenize.generate_tokens(StringIO(source).readline)
     ]
 
+class ParseError(Exception):
+    pass
 
-# def find_end_constant(source, start_from):
-#     '''Return the index of the character *after* the first Python constant
-#     found in source.
+class DetectorLockedError(Exception):
+    def __init__(self):
+        super(DetectorLockedError, self).__init__(
+            "This EndDetector is locked and cannot consume tokens.")
 
-#     All tokens beginning before index start_from will be ignored (this is
-#     necessary because the Python tokenizer won't work on certain incomplete
-#     lines, so we have to pass the *whole* line in and tokenize it).'''
+class EndDetector:
 
-#     tokens = get_tokens(source)
-
-#     lpar_count, tokens = consume_zero_or_more(
-#         tokens,
-#         [token_types.LPAR])
-
-#     tokens = consume_or_error(tokens, CONSTANT_TOKENS, CONSTANT_NAMES)
-
-#     rpar_count, tokens = consume_zero_or_more(
-#         tokens,
-#         [token_types.RPAR])
-
-#     if lpar_count > rpar_count:
-#         raise ParseError(UNMATCHED.format('(', ')', source))
-#     elif lpar_count < rpar_count:
-#         raise ParseError(UNMATCHED.format(')', '(', source))
-
-#     return line_column_to_absolute_index(
-#         source,
-#         tokens[0]['start'][0] - 1,
-#         tokens[0]['start'][1])
-
-#     # stack = []
-
-#     # constant_found = False
-
-#     # while tokens:
-#     #     token = tokens[0]
-#     #     tokens = tokens[1:]
-
-#     #     is_constant = (
-#     #         token['type'] in CONSTANT_TOKENS or
-#     #         token['token'] in CONSTANT_NAMES)
-
-#     #     start_index = line_column_to_absolute_index(
-#     #         source,
-#     #         token['start'][0] - 1,
-#     #         token['start'][1])
-
-#     #     if start_index < start_from:
-#     #         pass
-
-#     #     elif token['token'] == '(':
-#     #         stack.append(')')
-
-#     #     elif token['token'] == ')':
-#     #         popped = stack.pop()
-#     #         if not popped == ')':
-#     #             raise ParseError(UNMATCHED.format(')', '(', source))
-
-#     #     elif is_constant:
-#     #         constant_found = True
-
-#     #     elif token['type'] in WHITESPACE_TOKENS:
-#     #         pass
-
-#     #     if constant_found and not stack:
-#     #         return line_column_to_absolute_index(
-#     #             source,
-#     #             token['end'][0] - 1, # row is 1-indexed, so we offset it 
-#     #             token['end'][1])
-
-#     # #if we made it through source without finding an ending, something's wrong
-#     # raise ParseError("No constant found in: {}".format(source))
-
-# def consume_or_error(tokens, types, matches=[]):
-#     '''Return tokens[1:] if tokens[0] is either one of the types in types, or
-#     exactly matches a string in matches. Otherwise, raise an error.'''
-
-#     if not (tokens[0]['type'] in types or tokens[0]['token'] in matches):
-#         raise ParseError("Expected type {} or match {}, but got {}".format(
-#             types,
-#             matches,
-#             tokens[0]))
-
-#     return tokens[1:]
+    def __init__(self, source):
+        self.source = source
+        self.tokens = get_tokens(source)
+        self.consumed = []
+        self.locked = False
 
 
-# def consume_zero_or_more(tokens, types, matches=[]):
-#     '''Consume any leading tokens indicated by types or matches. Return a tuple
-#     (count, tokens), where count is the number of tokens removed and tokens is
-#     the list of remaining tokens.'''
+    @property
+    def last_consumed(self):
+        return self.consumed[-1]
 
-#     index = 0
+    def lock(self):
+        '''Lock this EndDetector, preventing it from consuming any more tokens.
+        
+        This is just a little extra safety, since we're going to generate these
+        things and pass them around -- we don't want people changing their state
+        unexpectedly.'''
+        self.locked = True
 
-#     while tokens[index]['type'] in types or tokens[index]['token'] in matches:
-#         index += 1
+    def get_end_index(self, token):
+        '''Return the absolute index of the end of token in self.source.''' 
+        return line_column_to_absolute_index(
+            self.source,
+            token['end'][0],
+            token['end'][1])
 
-#     return (index, tokens[index:])
+    def consume_anything(self, discard=False):
+        '''Consume the first token, no matter what it is.
+
+        If discard == True, the token will **not** be added to the record of
+        consumed tokens. Use this for tokens that shouldn't be considered 'part'
+        of the node, but we have to skip past anyway.'''
+
+        if self.locked:
+            raise DetectorLockedError()
+
+        if not discard:
+            self.consumed.append(self.tokens[0])
+
+        self.tokens = self.tokens[1:]
 
 
-# def find_end_call(source, start_at):
+    def consume(self, types, matches=[]):
+        '''Consume the first token if it's either of a type in types, or
+        exactly matches a string in matches. Otherwise, raise an error.'''
 
-#     tokens = get_tokens(source)
+        token = self.tokens[0]
 
-#     tokens = consume_or_error(
-#         tokens,
-#         [token_types.NAME])
+        if not (token['type'] in types or token['token'] in matches):
+            raise ParseError("Expected type {} or match {}, but got {}".format(
+                types,
+                matches,
+                token))
 
-#     tokens = consume_zero_or_more(
-#         tokens,
-#         [token_types.INDENT])
-
-#     tokens = consume_or_error(
-#         tokens,
-#         [token_types.LPAR])
+        self.consume_anything()
 
 
+    def consume_many(self, types, matches=[]):
+        '''Consume any leading tokens indicated by types or matches. Return the
+        number of tokens consumed.'''
 
+        count = 0
+        token = self.tokens[0]
+
+        while token['type'] in types or token['token'] in matches:
+            self.consume(types, matches)
+
+            token = self.tokens[0]
+            count += 1
+
+        return count
+
+    def consume_many_not(self, types, matches):
+        '''As consume_many, but only consumes tokens that *don't* fit a
+        specified type or match string.'''
+        count = 0
+        token = self.tokens[0]
+
+        while not token['type'] in types and not token['token'] in matches:
+            self.consume_anything()
+
+            token = self.tokens[0]
+            count += 1
+
+        return count
+
+
+    def discard_before(self, start_from):
+        '''Discard any tokens starting at an index before start_from. Return the
+        number of tokens discarded.'''
+
+        count = 0
+        token = self.tokens[0]
+
+        while line_column_to_absolute_index(
+                self.source,
+                token['start'][0],
+                token['start'][1]) < start_from:
+
+            self.consume_anything(discard=True)
+            
+            token = self.tokens[0]
+            count += 1
+
+        return count
+
+
+    def consume_constant(self):
+        '''Consume the next Python constant found in source.
+
+        All tokens beginning before index start_from will be ignored (this is
+        necessary because the Python tokenizer won't work on certain incomplete
+        lines, so we have to pass the *whole* line in and tokenize it).'''
+
+        lpar_count = self.consume_many([], ['('])
+
+        self.consume(CONSTANT_TOKENS, CONSTANT_NAMES)
+
+        rpar_count = self.consume_many([], [')'])
+
+
+        if lpar_count > rpar_count:
+            raise ParseError(UNMATCHED.format('(', ')', self.source))
+        elif lpar_count < rpar_count:
+            raise ParseError(UNMATCHED.format(')', '(', self.source))
+
+
+    def find_end_call(self, source, start_at):
+        self.consume(tokens, [token_types.NAME])
+        self.consume_many([token_types.INDENT])
+        self.consume([token_types.LPAR])
+
+        return self.get_end_index(self.last_consumed)

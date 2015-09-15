@@ -246,4 +246,7 @@ class SourceNode(Node):
 
                 children[child_node.name] = child_node
 
+            else:
+                print(child)
+
         return children
