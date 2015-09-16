@@ -2,7 +2,7 @@ import token as token_types
 import tokenize
 from StringIO import StringIO
 
-from code_monkey.utils import line_column_to_absolute_index
+from code_monkey.utils import line_column_to_absolute_index, hashabledict
 
 UNMATCHED = "'{}' without matching {} in {}"
 
@@ -61,12 +61,12 @@ BIN_OP_TOKENS = [
 def get_tokens(source):
     '''Return an array of token dicts in source.'''
     return [
-        {
+        hashabledict({
             'type': token[0],
             'token': token[1],
             'start': (token[2][0] - 1, token[2][1]),
             'end': (token[3][0] - 1, token[3][1]),
-        }
+        })
         for token in
         tokenize.generate_tokens(StringIO(source).readline)
     ]
@@ -232,10 +232,16 @@ class EndDetector:
 
         self.consume(CONSTANT_TOKENS, CONSTANT_NAMES)
 
+    @consume_parens
+    def consume_name(self):
+        '''Consume the next name found in source.'''
+        self.consume([token_types.NAME])
 
+    @consume_parens
     def consume_call(self):
-        self.consume(tokens, [token_types.NAME])
-        self.consume_many([token_types.INDENT])
-        self.consume([token_types.LPAR])
-
-        return self.get_end_index(self.last_consumed)
+        '''Consume the next function call in source.'''
+        self.consume([token_types.NAME])
+        self.consume_many(WHITESPACE_TOKENS)
+        self.consume([], ['('])
+        self.consume_many(WHITESPACE_TOKENS)
+        self.consume([], [')'])
