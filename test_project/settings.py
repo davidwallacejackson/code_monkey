@@ -12,3 +12,4 @@ MULTILINE_SETTING = {
 }  #some other comment
 
 BASE_PAY = 100
+MANAGER_PAY = BASE_PAY

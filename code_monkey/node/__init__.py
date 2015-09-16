@@ -19,3 +19,4 @@ from code_monkey.node.project import ProjectNode
 from code_monkey.node.assignment import AssignmentNode
 
 from code_monkey.node.expression.constant import ConstantNode
+from code_monkey.node.expression.name import NameNode

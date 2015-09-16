@@ -73,6 +73,7 @@ def test_inject_after():
 
     node_at_end = q.path_contains('BASE_PAY')[0]
     change = node_at_end.change.inject_after('foobar = "baz"\n')
+
     assert_in(
-        "-BASE_PAY = 100+BASE_PAY = 100\n+foobar = \"baz\"",
+        "BASE_PAY = 100\n+foobar = \"baz\"",
         str(change))

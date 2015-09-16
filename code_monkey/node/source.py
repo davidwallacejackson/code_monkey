@@ -1,4 +1,6 @@
-from astroid.node_classes import Assign, Import, Const, Dict
+import logging
+
+from astroid.node_classes import Assign, Import, Const, Dict, Name
 from astroid.scoped_nodes import Class, Function
 
 from code_monkey.change import SourceChangeGenerator
@@ -6,6 +8,8 @@ from code_monkey.node.base import Node
 from code_monkey.utils import (
     line_column_to_absolute_index,
     count_lines)
+
+logger = logging.getLogger(__name__)
 
 class SourceNode(Node):
     '''Shared base class for all nodes that represent code inside a single
@@ -177,7 +181,8 @@ class SourceNode(Node):
             FunctionNode,
             ImportNode,
             AssignmentNode,
-            ConstantNode)
+            ConstantNode,
+            NameNode)
 
         #all of the children found by astroid:
 
@@ -245,8 +250,12 @@ class SourceNode(Node):
                     astroid_object=child)
 
                 children[child_node.name] = child_node
-
+            elif isinstance(child, Name):
+                child_node = NameNode(
+                    parent=self,
+                    astroid_object=child)
+                children[child_node.name] = child_node
             else:
-                print(child)
+                logger.info('AST node omitted: ' + str(child))
 
         return children
