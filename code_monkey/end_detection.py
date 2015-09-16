@@ -71,6 +71,34 @@ def get_tokens(source):
         tokenize.generate_tokens(StringIO(source).readline)
     ]
 
+def consume_parens(func):
+    '''Wrap a method to consume any surrounding parens and enclosed whitespace.
+
+    Any Python expression can be wrapped in parens without changing its meaning,
+    so we need this all over the place.'''
+
+    def wrapped(*args, **kwargs):
+        self = args[0]
+
+        par_count = 0
+
+        while self.tokens[0]['token'] == '(':
+            self.consume([], ['('])
+            par_count += 1
+            self.consume_many(WHITESPACE_TOKENS, ['\n'])
+
+        func(*args, **kwargs)
+
+        while par_count > 0:
+            self.consume_many(WHITESPACE_TOKENS, ['\n'])
+            self.consume([], [')'])
+            par_count -= 1
+
+            if len(self.tokens) == 0:
+                raise ParseError(UNMATCHED.format('(', ')', self.source))
+
+    return wrapped
+
 class ParseError(Exception):
     pass
 
@@ -81,9 +109,15 @@ class DetectorLockedError(Exception):
 
 class EndDetector:
 
-    def __init__(self, source):
+    def __init__(self, source, child_tokens=[]):
         self.source = source
-        self.tokens = get_tokens(source)
+        self.all_tokens = get_tokens(source)
+        self.child_tokens = child_tokens
+
+        self.tokens = filter(
+            lambda token: token not in self.child_tokens,
+            self.all_tokens)
+
         self.consumed = []
         self.locked = False
 
@@ -188,6 +222,7 @@ class EndDetector:
         return count
 
 
+    @consume_parens
     def consume_constant(self):
         '''Consume the next Python constant found in source.
 
@@ -195,20 +230,10 @@ class EndDetector:
         necessary because the Python tokenizer won't work on certain incomplete
         lines, so we have to pass the *whole* line in and tokenize it).'''
 
-        lpar_count = self.consume_many([], ['('])
-
         self.consume(CONSTANT_TOKENS, CONSTANT_NAMES)
 
-        rpar_count = self.consume_many([], [')'])
 
-
-        if lpar_count > rpar_count:
-            raise ParseError(UNMATCHED.format('(', ')', self.source))
-        elif lpar_count < rpar_count:
-            raise ParseError(UNMATCHED.format(')', '(', self.source))
-
-
-    def find_end_call(self, source, start_at):
+    def consume_call(self):
         self.consume(tokens, [token_types.NAME])
         self.consume_many([token_types.INDENT])
         self.consume([token_types.LPAR])

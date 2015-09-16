@@ -28,6 +28,8 @@ def test_constant():
     assert_equal(find_end_constant(' (          "42"   )   ', 1),
         len(' (          "42"   )'))
 
+    assert_equal(find_end_constant('(\n42\n)\n', 0), len('(\n42\n)'))
+
 
 def test_locking():
     '''Test that we can't consume tokens after locking an EndDetector.'''
@@ -37,3 +39,4 @@ def test_locking():
 
     with assert_raises(DetectorLockedError):
         detector.consume_anything()
+
