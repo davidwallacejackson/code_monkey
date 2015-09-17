@@ -1,6 +1,6 @@
 import logging
 
-from astroid.node_classes import Assign, Import, Const, Dict, Name
+from astroid.node_classes import Assign, Import, Const, Dict, Name, AssName
 from astroid.scoped_nodes import Class, Function
 
 from code_monkey.change import SourceChangeGenerator
@@ -182,7 +182,8 @@ class SourceNode(Node):
             ImportNode,
             AssignmentNode,
             ConstantNode,
-            NameNode)
+            NameNode,
+            AssignmentNameNode)
 
         #all of the children found by astroid:
 
@@ -255,7 +256,12 @@ class SourceNode(Node):
                     parent=self,
                     astroid_object=child)
                 children[child_node.name] = child_node
+            elif isinstance(child, AssName):
+                child_node = AssignmentNameNode(
+                    parent=self,
+                    astroid_object=child)
+                children[child_node.name] = child_node
             else:
-                logger.info('AST node omitted: ' + str(child))
+                logger.debug('AST node omitted: ' + str(child))
 
         return children

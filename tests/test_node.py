@@ -159,3 +159,6 @@ def test_names_source():
     '''Test that NameNodes can identify their source.'''
     name_node = root_module.children['MANAGER_PAY'].children['BASE_PAY']
     assert_equal(name_node.get_source(), 'BASE_PAY')
+
+    aname_node = root_module.children['MANAGER_PAY'].children['MANAGER_PAY']
+    assert_equal(aname_node.get_source(), 'MANAGER_PAY')
