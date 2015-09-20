@@ -1,17 +1,17 @@
 '''Named import_node instead of import because import is a reserved word.'''
 
 from code_monkey.change import SourceChangeGenerator
-from code_monkey.node.base import Node
+from code_monkey.node.source import SourceNode
 
 
-# TODO: convert to SourceNode
-class ImportNode(Node):
+class ImportNode(SourceNode):
     '''Node representing an import statement.'''
 
     def __init__(self, parent, astroid_object, siblings):
-        super(ImportNode, self).__init__()
-        self.parent = parent
-        self._astroid_object = astroid_object
+        super(ImportNode, self).__init__(
+            parent=parent,
+            astroid_object=astroid_object,
+            siblings=siblings)
 
         base_name = astroid_object.names[0][0]
         self.name = base_name
