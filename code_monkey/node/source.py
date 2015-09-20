@@ -11,6 +11,25 @@ from code_monkey.utils import (
 
 logger = logging.getLogger(__name__)
 
+def get_node_class_mapping():
+    '''Return a dictionary mapping astroid classes to their corresponding
+    SourceNode equivalent.
+
+    We do this in a function so that we can delay importing the other SourceNode
+    classes (thereby preventing circular imports).'''
+
+    from code_monkey import node as cm_nodes
+
+    return {
+        Class: cm_nodes.ClassNode,
+        Function: cm_nodes.FunctionNode,
+        Assign: cm_nodes.AssignmentNode,
+        Import: cm_nodes.ImportNode,
+        Const: cm_nodes.ConstantNode,
+        Name: cm_nodes.NameNode,
+        AssName: cm_nodes.AssignmentNameNode
+    }
+
 class SourceNode(Node):
     '''Shared base class for all nodes that represent code inside a single
     file (i.e., module or lower).'''
@@ -182,16 +201,6 @@ class SourceNode(Node):
 
     @property
     def children(self):
-        #avoid circular imports
-        from code_monkey.node import (
-            ClassNode,
-            FunctionNode,
-            ImportNode,
-            AssignmentNode,
-            ConstantNode,
-            NameNode,
-            AssignmentNameNode)
-
         #all of the children found by astroid:
 
         astroid_children = self._astroid_object.get_children()
@@ -199,67 +208,17 @@ class SourceNode(Node):
 
         for child in astroid_children:
 
-            if isinstance(child, Class):
-
-                child_node = ClassNode(
+            try:
+                code_monkey_class = get_node_class_mapping()[child.__class__]
+                child_node = code_monkey_class(
                     parent=self,
                     astroid_object=child,
                     siblings=children)
 
                 children[child_node.name] = child_node
 
-            elif isinstance(child, Function):
-
-                child_node = FunctionNode(
-                    parent=self,
-                    astroid_object=child,
-                    siblings=children)
-
-                children[child_node.name] = child_node
-
-
-            elif isinstance(child, Assign):
-                #Assign is the class representing a variable assignment.
-
-                #we don't know the name of the variable until we build the Node,
-                #so we build the node before adding it to the children dict
-                child_node = AssignmentNode(
-                    parent=self,
-                    astroid_object=child,
-                    siblings=children)
-
-                children[child_node.name] = child_node
-
-            elif isinstance(child, Import):
-
-                child_node = ImportNode(
-                    parent=self,
-                    astroid_object=child,
-                    siblings=children)
-
-                children[child_node.name] = child_node
-
-            elif isinstance(child, Const):
-
-                child_node = ConstantNode(
-                    parent=self,
-                    astroid_object=child,
-                    siblings=children)
-
-                children[child_node.name] = child_node
-            elif isinstance(child, Name):
-                child_node = NameNode(
-                    parent=self,
-                    astroid_object=child,
-                    siblings=children)
-                children[child_node.name] = child_node
-            elif isinstance(child, AssName):
-                child_node = AssignmentNameNode(
-                    parent=self,
-                    astroid_object=child,
-                    siblings=children)
-                children[child_node.name] = child_node
-            else:
+            except KeyError:
+                #there's no equivalent to this astroid class in code_monkey yet
                 logger.debug('AST node omitted: ' + str(child))
 
         return children
