@@ -13,7 +13,12 @@ class AssignmentNode(SourceNode):
     = sign, beginning with the first non-whitespace character. Unlike classes
     and functions, a variable's source does NOT include a newline at the end.'''
 
-    def __init__(self, parent, astroid_object):
+    def __init__(self, parent, astroid_object, siblings):
+        super(AssignmentNode, self).__init__(
+            parent=parent,
+            astroid_object=astroid_object,
+            siblings=siblings)
+
         #the _astroid_object (an Assign object) has TWO children that we need to
         #consider: the variable name, and another astroid node (the 'right
         #hand' value)
@@ -21,19 +26,14 @@ class AssignmentNode(SourceNode):
         self._astroid_value = astroid_object.value
 
         try:
-            name = self._astroid_name.name
+            self.name = self._astroid_name.name
         except AttributeError:
             #'subscript' assignments (a[b] = ...) don't have a name in astroid.
             #instead, we give them one by reading their source
 
             #TODO: this can result in names containing dots, which is invalid.
             #need a better solution
-            name = self._astroid_name.as_string()
-
-        super(AssignmentNode, self).__init__(
-            parent=parent,
-            name=name,
-            astroid_object=astroid_object)
+            self.name = self._astroid_name.as_string()
 
     def eval_body(self):
         '''Attempt to evaluate the body (i.e., the value) of this AssignmentNode

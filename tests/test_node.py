@@ -68,6 +68,7 @@ VARIABLE_VALUE = {
 #data, there's no need for setup or teardown
 project = ProjectNode(TEST_PROJECT_PATH)
 package = project.children['lib']
+
 root_module = project.children['settings']
 
 employee_module = package.children['employee']

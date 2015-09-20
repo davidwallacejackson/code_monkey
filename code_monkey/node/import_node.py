@@ -4,15 +4,25 @@ from code_monkey.change import SourceChangeGenerator
 from code_monkey.node.base import Node
 
 
+# TODO: convert to SourceNode
 class ImportNode(Node):
     '''Node representing an import statement.'''
 
-    def __init__(self, parent, name, astroid_object):
+    def __init__(self, parent, astroid_object, siblings):
         super(ImportNode, self).__init__()
-
         self.parent = parent
-        self.name = name
         self._astroid_object = astroid_object
+
+        base_name = astroid_object.names[0][0]
+        self.name = base_name
+
+        index = 0
+        while self.name in siblings:
+            self.name = base_name + '_' + str(index)
+            index += 1
+
+        # so for multiple imports from datetime, you get datetime,
+        # datetime_0, datetime_1 etc.
 
     @property
     def change(self):

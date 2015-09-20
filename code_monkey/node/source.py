@@ -15,12 +15,19 @@ class SourceNode(Node):
     '''Shared base class for all nodes that represent code inside a single
     file (i.e., module or lower).'''
 
-    def __init__(self, parent, astroid_object, name):
+    def __init__(self, parent, astroid_object, siblings=[]):
         super(SourceNode, self).__init__()
 
         self.parent = parent
-        self.name = name
         self._astroid_object = astroid_object
+
+        try:
+            self.name = astroid_object.name
+        except AttributeError:
+            #not all astroid nodes have a .name property -- if we need to come
+            #up with our own name, that should happen in the subclass' __init__
+            #method
+            pass
 
     @property
     def change(self):
@@ -194,17 +201,22 @@ class SourceNode(Node):
 
             if isinstance(child, Class):
 
-                children[child.name] = ClassNode(
+                child_node = ClassNode(
                     parent=self,
-                    name=child.name,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
+
+                children[child_node.name] = child_node
 
             elif isinstance(child, Function):
 
-                children[child.name] = FunctionNode(
+                child_node = FunctionNode(
                     parent=self,
-                    name=child.name,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
+
+                children[child_node.name] = child_node
+
 
             elif isinstance(child, Assign):
                 #Assign is the class representing a variable assignment.
@@ -213,53 +225,39 @@ class SourceNode(Node):
                 #so we build the node before adding it to the children dict
                 child_node = AssignmentNode(
                     parent=self,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
 
                 children[child_node.name] = child_node
 
             elif isinstance(child, Import):
-                base_name = child.names[0][0]
-                name = base_name
-
-                index = 0
-                while name in children:
-                    name = base_name + '_' + str(index)
-                    index += 1
-
-                # so for multiple imports from datetime, you get datetime,
-                # datetime_0, datetime_1 etc.
 
                 child_node = ImportNode(
                     parent=self,
-                    name=name,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
 
                 children[child_node.name] = child_node
 
             elif isinstance(child, Const):
-                base_name = 'constant'
-                name = base_name
-
-                index = 0
-                while name in children:
-                    name = base_name + '_' + str(index)
-                    index += 1
 
                 child_node = ConstantNode(
                     parent=self,
-                    name=name,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
 
                 children[child_node.name] = child_node
             elif isinstance(child, Name):
                 child_node = NameNode(
                     parent=self,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
                 children[child_node.name] = child_node
             elif isinstance(child, AssName):
                 child_node = AssignmentNameNode(
                     parent=self,
-                    astroid_object=child)
+                    astroid_object=child,
+                    siblings=children)
                 children[child_node.name] = child_node
             else:
                 logger.debug('AST node omitted: ' + str(child))

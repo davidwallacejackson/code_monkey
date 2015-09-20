@@ -31,6 +31,8 @@ class Node(object):
 
     @property
     def path(self):
+        if not hasattr(self.parent, 'path'):
+            import ipdb; ipdb.set_trace()
         parent_path = self.parent.path
 
         #prevents an 'empty' root from giving us paths like '.foo.bar.baz'
