@@ -15,7 +15,7 @@ class SourceNode(Node):
     '''Shared base class for all nodes that represent code inside a single
     file (i.e., module or lower).'''
 
-    def __init__(self, parent, name, astroid_object):
+    def __init__(self, parent, astroid_object, name):
         super(SourceNode, self).__init__()
 
         self.parent = parent
